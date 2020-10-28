@@ -1,0 +1,103 @@
+<script src="{{ url_for('static', filename='includes/jquery/js/jquery-3.4.1.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='includes/bootstrap-3.3.7/css/bootstrap.min.css') }}">
+<script src="{{ url_for('static', filename='includes/bootstrap-3.3.7/js/bootstrap.min.js') }}"></script>
+
+<script src="{{ url_for('static', filename='includes/visjs/js/vis-network.min.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/objectProperties.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='themes/default/default.css') }}">
+
+
+<script>
+    var CSRF = "{{CSRF}}"
+</script>
+
+<html>
+    <head>
+        
+    </head>
+    <body class="theme-panelContainer">
+        <input type="text" id="src_ip" class="inputFullWidth theme-panelTextbox">
+        <div class="flowchart theme-content" id="map"></div>
+    </body>
+</html>
+
+<script>
+    $('#src_ip').keydown(function (event) {
+        let keyPressed = event.keyCode || event.which;
+        if (keyPressed === 13) {
+            $.ajax({url:"/plugin/asset/src_ip/"+$('#src_ip').val()+"/", type:"GET", success: function ( result ) {
+                    network(result["results"],"map")
+                }
+            });
+        }
+    });
+</script>
+
+<script>
+    function network(data,HTMLElementID) {
+        var nodes = [];
+        var edges = [];
+        var network = null;
+        var mapping = {};
+        for (d in data) {
+            d = data[d]
+            var b = null
+            var a = null
+            if (d[0] in mapping) {
+                nodes[mapping[d[0]]["id"]]["value"] = nodes[mapping[d[0]]["id"]]["value"] + 1
+                a = mapping[d[0]]["id"]
+            }
+            if (d[1] in mapping) {
+                nodes[mapping[d[1]]["id"]]["value"] = nodes[mapping[d[1]]["id"]]["value"] + 1
+                b = mapping[d[1]]["id"]
+            }
+
+            if (a == null) {
+                a = nodes.length
+                nodes.push({ id: a, label: d[0], value: 1 });
+                mapping[d[0]] = { "id" : a, "count" : 1 }
+            }
+            if (b == null) {
+                b = nodes.length
+                nodes.push({ id: b, label: d[1], value: 1 });
+                mapping[d[1]] = { "id" : b, "count" : 1 }
+            }
+            if ((b != null) && (a != null)) {
+                edges.push({ 
+                    from: a, 
+                    to: b
+                });
+            }
+        }
+        
+        var container = document.getElementById(HTMLElementID);
+        var data = {
+            nodes: nodes,
+            edges: edges
+        };
+        var options = {
+            edges: { 
+                smooth: { 
+                    type: "continuous" 
+                } 
+            },
+            interaction: {
+                hideEdgesOnDrag: false,
+                tooltipDelay: 200
+            },
+            nodes: {
+                shape: "dot",
+                scaling: {
+                    min: 10,
+                    max: 10
+                }
+            },
+            layout: {
+                improvedLayout: true,
+            },
+        };
+        network = new vis.Network(container, data, options);
+    }
+</script>
