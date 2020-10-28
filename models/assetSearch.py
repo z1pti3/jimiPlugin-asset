@@ -8,6 +8,7 @@ from plugins.asset.models import asset
 class _assetSearch(action._action):
 	search = dict()
 	fields = list()
+	flatternFields = list()
 
 	def __init__(self):
 		cache.globalCache.newCache("assetCache")
@@ -24,6 +25,11 @@ class _assetSearch(action._action):
 		actionResult["events"] = []
 		if assetList is not None:
 			for asset in assetList:
+				if len(self.flatternFields) > 0:
+					for flatternField in self.flatternFields:
+						if flatternField in asset["fields"]:
+							asset[flatternField] = asset["fields"][flatternField]
+							del asset["fields"][flatternField]
 				actionResult["events"].append(asset)
 		actionResult["result"] = True
 		actionResult["rc"] = 0
