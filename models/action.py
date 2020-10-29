@@ -42,7 +42,7 @@ class _assetUpdate(action._action):
 
 		assetItem = cache.globalCache.get("assetCache",match,getAssetObject,assetName,assetType,assetEntiy,extendCacheTime=True)
 		if not assetItem:
-			assetItem = asset._asset().bulkNew(self.acl,assetName,assetEntiy,assetType,updateSource,assetFields,self.bulkClass)
+			assetItem = asset._asset().bulkNew(self.acl,assetName,assetEntiy,assetType,updateSource,assetFields,updateTime,self.sourcePriority,self.bulkClass)
 			cache.globalCache.insert("assetCache",match,[assetItem])
 			actionResult["result"] = True
 			actionResult["msg"] = "Created new asset"

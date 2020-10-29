@@ -8,25 +8,28 @@ class _asset(db._document):
     entity = str()
     assetType = str()
     lastSeen = dict()
+    lastSeenTimestamp = float()
     fields = dict()
 
     _dbCollection = db.db["asset"]
 
-    def new(self, acl, name, entity, assetType, updateSource, fields):
+    def new(self, acl, name, entity, assetType, updateSource, fields, lastSeenTimestamp, priority):
         self.acl = acl
         self.name = name
         self.entity = entity
         self.assetType = assetType
-        self.lastSeen[updateSource] = fields
+        self.lastSeen[updateSource] = {**fields, **{"priority":priority}}
+        self.lastSeenTimestamp = lastSeenTimestamp
         self.fields = fields
         return super(_asset, self).new()
 
-    def bulkNew(self, acl, name, entity, assetType, updateSource, fields, bulkClass):
+    def bulkNew(self, acl, name, entity, assetType, updateSource, fields, lastSeenTimestamp, priority, bulkClass):
         self.acl = acl
         self.name = name
         self.entity = entity
         self.assetType = assetType
-        self.lastSeen[updateSource] = fields
+        self.lastSeen[updateSource] = {**fields, **{"priority":priority}}
+        self.lastSeenTimestamp = lastSeenTimestamp
         self.fields = fields
         return super(_asset, self).bulkNew(bulkClass)
 
