@@ -70,9 +70,16 @@ class _assetUpdate(action._action):
 		else:
 			assetItem = assetItem[0]
 
+		if assetItem._id == "":
+			actionResult["result"] = False
+			actionResult["msg"] = "Asset not yet added"
+			actionResult["rc"] = 404
+			return actionResult
+
 		if updateSource not in assetItem.lastSeen:
 			assetItem.lastSeen[updateSource] = {}
 		
+
 		newTimestamp = None
 		if updateTime:
 			try:
