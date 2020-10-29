@@ -40,7 +40,7 @@ class _assetUpdate(action._action):
 
 		match = "{0}-{1}-{2}".format(assetName,assetType,assetEntiy)
 
-		assetItem = cache.globalCache.get("assetCache",match,getAssetObject,assetName,assetType,assetEntiy,extendCacheTime=True)
+		assetItem = cache.globalCache.get("assetCache",match,getAssetObject,assetName,assetType,assetEntiy)
 		if not assetItem:
 			assetItem = asset._asset().bulkNew(self.acl,assetName,assetEntiy,assetType,updateSource,assetFields,updateTime,self.sourcePriority,self.bulkClass)
 			cache.globalCache.insert("assetCache",match,[assetItem])

@@ -18,7 +18,7 @@ class _asset(db._document):
         self.name = name
         self.entity = entity
         self.assetType = assetType
-        self.lastSeen[updateSource] = {**fields, **{"priority":priority}}
+        self.lastSeen = {updateSource: {**fields, **{"priority":priority}}}
         self.lastSeenTimestamp = lastSeenTimestamp
         self.fields = fields
         return super(_asset, self).new()
@@ -28,7 +28,7 @@ class _asset(db._document):
         self.name = name
         self.entity = entity
         self.assetType = assetType
-        self.lastSeen[updateSource] = {**fields, **{"priority":priority}}
+        self.lastSeen = {updateSource: {**fields, **{"priority":priority}}}
         self.lastSeenTimestamp = lastSeenTimestamp
         self.fields = fields
         return super(_asset, self).bulkNew(bulkClass)
