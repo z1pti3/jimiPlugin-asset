@@ -104,6 +104,8 @@ class _assetUpdate(action._action):
 			assetChanged = True
 			assetItem.lastSeen[updateSource]["priority"] = self.sourcePriority
 			assetItem.lastSeen[updateSource]["lastUpdate"] = newTimestamp
+			if newTimestamp > assetItem.lastSeenTimestamp:
+				assetItem.lastSeenTimestamp = newTimestamp
 
 			if self.replaceExisting:
 				assetItem.lastSeen[updateSource] = assetFields
