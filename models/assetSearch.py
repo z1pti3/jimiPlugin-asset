@@ -11,7 +11,7 @@ class _assetSearch(action._action):
 	flattenFields = list()
 
 	def __init__(self):
-		cache.globalCache.newCache("assetCache")
+		cache.globalCache.newCache("assetSearchCache")
 
 	def run(self,data,persistentData,actionResult):
 		search = helpers.evalDict(self.search,{"data" : data})
