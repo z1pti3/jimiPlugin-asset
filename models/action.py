@@ -5,10 +5,104 @@ from core import db, helpers, function, logging, cache, audit
 
 from plugins.asset.models import asset
 
+class _assetBulkUpdate(action._action):
+	assetType = str()
+	assetEntity = str()
+	updateTime = str()
+	updateSource = str()
+	sourcePriority = int()
+	assetData = dict()
+	replaceExisting = bool()
+	delayedUpdate = int()
+	auditHistory = bool()
+
+	
+	def __init__(self):
+		cache.globalCache.newCache("assetCache")
+		self.bulkClass = db._bulk()
+
+	def postRun(self):
+		self.bulkClass.bulkOperatonProcessing()
+
+	def run(self,data,persistentData,actionResult):
+		assetType = helpers.evalString(self.assetType,{"data" : data})
+		assetEntity = helpers.evalString(self.assetEntity,{"data" : data})
+		updateSource = helpers.evalString(self.updateSource,{"data" : data})
+		updateTime = helpers.evalString(self.updateTime,{"data" : data})
+		assetData = helpers.evalDict(self.assetData,{"data" : data})
+
+		assetNames = []
+		for assetName, assetFields in assetData.items():
+			assetNames.append(assetName)
+
+		existingAssets = asset._asset().getAsClass(query={ "name" : { "$in" : assetNames }, "assetType" : assetType, "entity" : assetEntity })
+
+		# Updating existing
+		for assetItem in existingAssets:
+			if assetItem.name in assetData:
+				del assetData[assetItem.name]
+
+			newTimestamp = None
+			if updateTime:
+				try:
+					if updateTime < assetItem.lastSeen[updateSource]["lastUpdate"]:
+						newTimestamp = False
+					else:
+						newTimestamp = updateTime
+				except (KeyError, ValueError):
+					pass
+			if newTimestamp == None:
+				newTimestamp = time.time()
+
+			assetChanged = False
+			if newTimestamp != False:
+				try:
+					if (time.time() - assetItem.lastSeen[updateSource]["lastUpdate"]) < self.delayedUpdate:
+						continue
+				except KeyError:
+					pass
+				assetChanged = True
+				assetItem.lastSeen[updateSource]["priority"] = self.sourcePriority
+				assetItem.lastSeen[updateSource]["lastUpdate"] = newTimestamp
+				if newTimestamp > assetItem.lastSeenTimestamp:
+					assetItem.lastSeenTimestamp = newTimestamp
+
+				if self.replaceExisting:
+					assetItem.lastSeen[updateSource] = assetFields
+				else:
+					for key, value in assetFields.items():
+						assetItem.lastSeen[updateSource][key] = value
+
+			# Working out priority and define fields
+			if assetChanged:
+				foundValues = {}
+				blacklist = ["lastUpdate","priority"]
+				for source, sourceValue in assetItem.lastSeen.items():
+					for key, value in sourceValue.items():
+						if key not in blacklist:
+							if key not in foundValues:
+								foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
+							else:
+								if sourceValue["priority"] < foundValues[key]["priority"]:
+									foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
+				assetItem.fields = {}
+				for key, value in foundValues.items():
+					assetItem.fields[key] = value["value"]
+				assetItem.bulkUpdate(["lastSeen","fields"],self.bulkClass)
+
+		# Adding new
+		for assetName, assetFields in assetData.items():
+			assetItem = asset._asset().bulkNew(self.acl,assetName,assetEntity,assetType,updateSource,assetFields,updateTime,self.sourcePriority,self.bulkClass)	
+			
+		actionResult["result"] = True
+		actionResult["rc"] = 0
+		return actionResult
+	
+
 class _assetUpdate(action._action):
 	assetName = str()
 	assetType = str()
-	assetEntiy = str()
+	assetEntity = str()
 	updateTime = str()
 	updateSource = str()
 	sourcePriority = int()
@@ -27,7 +121,7 @@ class _assetUpdate(action._action):
 	def run(self,data,persistentData,actionResult):
 		assetName = helpers.evalString(self.assetName,{"data" : data})
 		assetType = helpers.evalString(self.assetType,{"data" : data})
-		assetEntiy = helpers.evalString(self.assetEntiy,{"data" : data})
+		assetEntity = helpers.evalString(self.assetEntity,{"data" : data})
 		updateSource = helpers.evalString(self.updateSource,{"data" : data})
 		updateTime = helpers.evalString(self.updateTime,{"data" : data})
 		assetFields = helpers.evalDict(self.assetFields,{"data" : data})
@@ -38,11 +132,11 @@ class _assetUpdate(action._action):
 			actionResult["rc"] = 403
 			return actionResult
 
-		match = "{0}-{1}-{2}".format(assetName,assetType,assetEntiy)
+		match = "{0}-{1}-{2}".format(assetName,assetType,assetEntity)
 
-		assetItem = cache.globalCache.get("assetCache",match,getAssetObject,assetName,assetType,assetEntiy)
+		assetItem = cache.globalCache.get("assetCache",match,getAssetObject,assetName,assetType,assetEntity)
 		if not assetItem:
-			assetItem = asset._asset().bulkNew(self.acl,assetName,assetEntiy,assetType,updateSource,assetFields,updateTime,self.sourcePriority,self.bulkClass)
+			assetItem = asset._asset().bulkNew(self.acl,assetName,assetEntity,assetType,updateSource,assetFields,updateTime,self.sourcePriority,self.bulkClass)
 			cache.globalCache.insert("assetCache",match,[assetItem])
 			actionResult["result"] = True
 			actionResult["msg"] = "Created new asset"
