@@ -62,8 +62,6 @@ class _assetBulkUpdate(action._action):
 				except KeyError:
 					pass
 				assetChanged = True
-				assetItem.lastSeen[updateSource]["priority"] = self.sourcePriority
-				assetItem.lastSeen[updateSource]["lastUpdate"] = newTimestamp
 				if newTimestamp > assetItem.lastSeenTimestamp:
 					assetItem.lastSeenTimestamp = newTimestamp
 
@@ -72,6 +70,9 @@ class _assetBulkUpdate(action._action):
 				else:
 					for key, value in assetFields.items():
 						assetItem.lastSeen[updateSource][key] = value
+
+				assetItem.lastSeen[updateSource]["priority"] = self.sourcePriority
+				assetItem.lastSeen[updateSource]["lastUpdate"] = newTimestamp
 
 			# Working out priority and define fields
 			if assetChanged:
@@ -196,8 +197,6 @@ class _assetUpdate(action._action):
 			except KeyError:
 				pass
 			assetChanged = True
-			assetItem.lastSeen[updateSource]["priority"] = self.sourcePriority
-			assetItem.lastSeen[updateSource]["lastUpdate"] = newTimestamp
 			if newTimestamp > assetItem.lastSeenTimestamp:
 				assetItem.lastSeenTimestamp = newTimestamp
 
@@ -206,6 +205,9 @@ class _assetUpdate(action._action):
 			else:
 				for key, value in assetFields.items():
 					assetItem.lastSeen[updateSource][key] = value
+
+			assetItem.lastSeen[updateSource]["priority"] = self.sourcePriority
+			assetItem.lastSeen[updateSource]["lastUpdate"] = newTimestamp
 
 		# Working out priority and define fields
 		if assetChanged:
