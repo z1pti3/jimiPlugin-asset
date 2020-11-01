@@ -5,21 +5,28 @@ class _asset(plugin._plugin):
 
     def install(self):
         # Register models
-        model.registerModel("asset","_asset","_asset","plugins.asset.models.asset")
+        model.registerModel("asset","_asset","_document","plugins.asset.models.asset")
         model.registerModel("assetUpdate","_assetUpdate","_action","plugins.asset.models.action")
         model.registerModel("assetBulkUpdate","_assetBulkUpdate","_action","plugins.asset.models.action")
         model.registerModel("assetSearch","_assetSearch","_action","plugins.asset.models.assetSearch")
+        model.registerModel("assetRelationship","_assetRelationship","_document","plugins.asset.models.relationship")
+        model.registerModel("assetRelationshipUpdate","_assetRelationshipUpdate","_action","plugins.asset.models.relationship")
         return True
 
     def uninstall(self):
         # deregister models
-        model.deregisterModel("asset","_asset","_asset","plugins.asset.models.asset")
+        model.deregisterModel("asset","_asset","_document","plugins.asset.models.asset")
         model.deregisterModel("assetUpdate","_assetUpdate","_action","plugins.asset.models.action")
         model.deregisterModel("assetBulkUpdate","_assetBulkUpdate","_action","plugins.asset.models.action")
         model.deregisterModel("assetSearch","_assetSearch","_action","plugins.asset.models.assetSearch")
+        model.deregisterModel("assetRelationship","_assetRelationship","_document","plugins.asset.models.relationship")
+        model.deregisterModel("assetRelationshipUpdate","_assetRelationshipUpdate","_action","plugins.asset.models.relationship")
         return True
     
     def upgrade(self,LatestPluginVersion):
+        if self.version < 0.4:
+            model.registerModel("assetRelationship","_assetRelationship","_document","plugins.asset.models.relationship")
+            model.registerModel("assetRelationshipUpdate","_assetRelationshipUpdate","_action","plugins.asset.models.relationship")
         if self.version < 0.3:
             model.registerModel("assetBulkUpdate","_assetBulkUpdate","_action","plugins.asset.models.action")
         if self.version < 0.2:
