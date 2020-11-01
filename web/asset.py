@@ -4,9 +4,9 @@ from flask import current_app as app
 from pathlib import Path
 import time, json, csv, io
 
-from plugins.asset.models import asset
+from plugins.asset.models import asset, relationship
 
-from core import api
+from core import api, helpers, db
 
 
 pluginPages = Blueprint('assetPages', __name__, template_folder="templates")
@@ -19,18 +19,50 @@ def mainAssetPage():
     #    foundAsset.append({ "_id" : assetObject._id, "name" : assetObject.name, "type" : assetObject.assetType, "lastSeen" : assetObject.lastSeen })
     return render_template("asset.html",asset=foundAsset)
 
-@pluginPages.route("/asset/src_ip/")
-def getAssetIPPage():
+@pluginPages.route("/asset/relationship/")
+def getAssetRelationshipPage():
     return render_template("relationship.html")
 
-@pluginPages.route("/asset/src_ip/<src_ip>/")
-def getAssetByIP(src_ip):
-    assets = asset._asset().getAsClass(api.g.sessionData,query={ "fields.src_ip" : src_ip },fields=["_id","name","fields"])
-    foundAssets = []
-    for assetObject in assets:
-        assetUsers = asset._asset().getAsClass(api.g.sessionData,query={ "fields.user" : assetObject.name },fields=["_id","name","fields"])
-        for assetUser in assetUsers:
-            if "src_ip" in assetUser.fields:
-                foundAssets.append([assetObject.name,assetUser.fields["src_ip"]])
-        foundAssets.append([src_ip,assetObject.name])
-    return { "results" : foundAssets }, 200
+@pluginPages.route("/asset/relationship/<fromAsset>/<timespan>/")
+def getRelationshipsByTimespan(fromAsset,timespan):
+    timespan = helpers.roundTime(roundTo=int(timespan)).timestamp()
+
+    accessIDs = []
+    adminBypass = False
+    sessionData = api.g.sessionData
+    if "admin" in sessionData:
+        if sessionData["admin"]:
+            adminBypass = True
+    if not adminBypass:
+        accessIDs = sessionData["accessIDs"]
+        match = { "$or" : [ { "acl.ids.accessID" : { "$in" : accessIDs }, "acl.ids.read" : True }, { "acl.fields.ids.accessID" : { "$in" : accessIDs } }, { "acl" : { "$exists" : False } }, { "acl" : {} } ], "timespan" : timespan }
+    else:
+        match = { "timespan" : timespan, "fromAsset" : fromAsset }
+    
+    if fromAsset == "":
+        del match["fromAsset"]
+
+    relationships = relationship._assetRelationship()._dbCollection.aggregate([ 
+        {
+            "$match" : match
+        },
+        { 
+            "$graphLookup" : 
+            { 
+                "from" : "assetRelationship",
+                "startWith" : "$fromAsset",
+                "connectFromField" : "fromAsset",
+                "connectToField" : "toAsset",
+                "as" : "relationships"
+            }
+        }
+    ])
+
+    graph = []
+    for relationshipItem in relationships:
+        graph.append([relationshipItem["fromAsset"],relationshipItem["toAsset"]])
+        for relationshipItemRelationship in relationshipItem["relationships"]:
+            graph.append([relationshipItemRelationship["fromAsset"],relationshipItemRelationship["toAsset"]])
+    return { "results" : graph }, 200
+
+

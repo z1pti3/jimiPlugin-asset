@@ -69,7 +69,7 @@ class _assetRelationshipUpdate(action._action):
         timespan = 3600
         if self.timespan > 0:
             timespan = self.timespan
-        timespan = helpers.roundTime(roundTo=timespan)
+        timespan = helpers.roundTime(roundTo=timespan).timestamp()
 
         _assetRelationship().addRelationship(self.acl,timespan,fromAsset,toAsset,relationshipData,count)
         actionResult["result"] = True

@@ -18,19 +18,31 @@
         
     </head>
     <body class="theme-panelContainer">
-        <input type="text" id="src_ip" class="inputFullWidth theme-panelTextbox">
+        <input type="text" id="timespan" class="inputFullWidth theme-panelTextbox">
+        <input type="text" id="fromAsset" class="inputFullWidth theme-panelTextbox">
         <div class="flowchart theme-content" id="map"></div>
     </body>
 </html>
 
 <script>
-    $('#src_ip').keydown(function (event) {
+    function postSearch() {
+        $.ajax({url:"/plugin/asset/relationship/"+ $('#fromAsset').val() +"/"+$('#timespan').val()+"/", type:"GET", success: function ( result ) {
+                network(result["results"],"map")
+            }
+        });
+    }
+
+    $('#timespan').keydown(function (event) {
         let keyPressed = event.keyCode || event.which;
         if (keyPressed === 13) {
-            $.ajax({url:"/plugin/asset/src_ip/"+$('#src_ip').val()+"/", type:"GET", success: function ( result ) {
-                    network(result["results"],"map")
-                }
-            });
+            postSearch()
+        }
+    });
+
+    $('#fromAsset').keydown(function (event) {
+        let keyPressed = event.keyCode || event.which;
+        if (keyPressed === 13) {
+            postSearch()
         }
     });
 </script>
@@ -81,7 +93,7 @@
             edges: { 
                 smooth: { 
                     type: "continuous" 
-                } 
+                }, 
             },
             interaction: {
                 hideEdgesOnDrag: false,
