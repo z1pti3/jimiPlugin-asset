@@ -48,39 +48,87 @@
 </script>
 
 <script>
-    function network(data,HTMLElementID) {
-        var nodes = [];
-        var edges = [];
+function network(data,HTMLElementID) {
         var network = null;
         var mapping = {};
+        var edgeMapping = {};
         for (d in data) {
             d = data[d]
             var b = null
             var a = null
-            if (d[0] in mapping) {
-                nodes[mapping[d[0]]["id"]]["value"] = nodes[mapping[d[0]]["id"]]["value"] + 1
-                a = mapping[d[0]]["id"]
+            if (mapping.hasOwnProperty(d[0])) {
+                a = d[0]
             }
-            if (d[1] in mapping) {
-                nodes[mapping[d[1]]["id"]]["value"] = nodes[mapping[d[1]]["id"]]["value"] + 1
-                b = mapping[d[1]]["id"]
+            if (a == null) {
+                mapping[d[0]] = { "value" : 0 }
+                a = d[0]
             }
 
-            if (a == null) {
-                a = nodes.length
-                nodes.push({ id: a, label: d[0], value: 1 });
-                mapping[d[0]] = { "id" : a, "count" : 1 }
+
+            if (mapping.hasOwnProperty(d[1])) {
+                b = d[1]
             }
             if (b == null) {
-                b = nodes.length
-                nodes.push({ id: b, label: d[1], value: 1 });
-                mapping[d[1]] = { "id" : b, "count" : 1 }
+                mapping[d[1]] = { "value" : 0 }
+                b = d[1]
             }
-            if ((b != null) && (a != null)) {
-                edges.push({ 
-                    from: a, 
-                    to: b
-                });
+
+	    var key = a+"->"+b;
+            var key2 = b+"->"+a;
+            if ((!edgeMapping.hasOwnProperty(key)) && (!edgeMapping.hasOwnProperty(key2))) {
+                edgeMapping[key] = 1;
+                edgeMapping[key2] = 1;
+                mapping[d[0]]["value"] = mapping[d[0]]["value"] + d[2]
+                mapping[d[1]]["value"] = mapping[d[1]]["value"] + d[2]
+            }
+        }
+
+        var nodes = [];
+        var edges = [];
+        var edgeMapping = {};
+        var finalNodes = []
+        for (d in data) {
+            d = data[d];
+            var b = null;
+            var a = null;
+            var color = "#4090c9";
+            a = mapping[d[0]];
+            b = mapping[d[1]];
+
+            if (d[0] == $('#fromAsset').val() || d[1] == $('#fromAsset').val() ) {
+                color = "#a61919";
+	    }
+
+            if (((a["value"] > 1 && b["value"] > 1) && (a["value"] < 25 && b["value"] < 25)) || (d[0] == $('#fromAsset').val() || d[1] == $('#fromAsset').val() )) {
+                if (!a.hasOwnProperty("id")) {
+                    id = nodes.length;
+                    nodes.push({ id: id, label: d[0], value: a["value"], color : color });
+                    mapping[d[0]]["id"] = id;
+                }
+
+                if (!b.hasOwnProperty("id")) {
+                    id = nodes.length;
+                    nodes.push({ id: id, label: d[1], value: b["value"], color : color });
+                    mapping[d[1]]["id"] = id;
+                }
+            } else {
+                a = null;
+                b = null;
+            }
+
+            if (a != null || b != null) {
+                if (a["id"] != b["id"]) {
+                    var key = a["id"]+"->"+b["id"];
+                    var key2 = b["id"]+"->"+a["id"];
+                    if ((!edgeMapping.hasOwnProperty(key)) && (!edgeMapping.hasOwnProperty(key2))) {
+                        edgeMapping[key] = 1;
+                        edgeMapping[key2] = 1;
+                        edges.push({ 
+                            from: a["id"], 
+                            to: b["id"]
+                        });
+                    }
+                }
             }
         }
         
@@ -90,26 +138,37 @@
             edges: edges
         };
         var options = {
-            edges: { 
-                smooth: { 
-                    type: "continuous" 
-                }, 
-            },
-            interaction: {
-                hideEdgesOnDrag: false,
-                tooltipDelay: 200
-            },
-            nodes: {
-                shape: "dot",
-                scaling: {
-                    min: 10,
-                    max: 10
-                }
-            },
-            layout: {
-                improvedLayout: true,
-            },
-        };
+     physics: {
+      barnesHut: {gravitationalConstant: -80000, springConstant: 0.001, springLength: 200},      
+      timestep: 0.2,
+      stabilization : {
+          iterations : 1000
+      }
+    },    interaction: {
+      tooltipDelay: 200,
+      hideEdgesOnDrag: true,
+    },                       
+
+    nodes: {
+      shape: "dot",
+      scaling: {
+        min: 10,
+        max: 100,
+      },
+      font: {
+        size: 30,
+        face: "Tahoma",
+        color: "#bfbfbf"
+      },
+    },
+    edges: {
+      width: 0.15,
+      color: { inherit: "from" },
+      smooth: {
+        type: "continuous",
+      },
+    }
+      };
         network = new vis.Network(container, data, options);
     }
 </script>

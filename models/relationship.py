@@ -17,61 +17,47 @@ class _assetRelationship(db._document):
 
     _dbCollection = db.db["assetRelationship"]
 
-    def __init__(self):
-        cache.globalCache.newCache("dbModelCache")
-
     def addRelationship(self, acl, timespan, fromAsset, toAsset, data, count):
-        result = cache.globalCache.get("dbModelCache",self.__class__.__name__,getClassByName,extendCacheTime=True)
-        if len(result) == 1:
-            result = result[0]
+        try:
+            result = cache.globalCache.get("dbModelCache",self.__class__.__name__,getClassByName,extendCacheTime=True)[0]
             self._dbCollection.update_one({ "timespan" : timespan, "fromAsset" : fromAsset, "toAsset" : toAsset, "data" : data, "classID" : result["_id"] },{ "$set" : { "acl" : acl, "lastSeen" : int(time.time()) }, "$inc" : { "count" : count } },upsert=True)
+        except:
+            pass
 
+    def addRelationshipBulk(self, acl, timespan, fromAsset, toAsset, data, count, bulkClass):
+        try:
+            result = cache.globalCache.get("dbModelCache",self.__class__.__name__,getClassByName,extendCacheTime=True)[0]
+            query = { "timespan" : timespan, "fromAsset" : fromAsset, "toAsset" : toAsset, "data" : data, "classID" : result["_id"] }
+            update= { "$set" : { "acl" : acl, "lastSeen" : int(time.time()) }, "$inc" : { "count" : count } }
+            self.bulkUpsert(query, update, bulkClass, customUpdate=True)
+        except:
+            pass
 
 class _assetRelationshipUpdate(action._action):
     relationshipData = dict()
     fromAsset = str()
     toAsset = str()
     count = str()
-    resolveAsset = bool()
-    continueAfterResolveError = bool()
-    field = str()
-    assetType = str()
-    assetEntity = str()
     timespan = int()
+
+    def __init__(self):
+        self.bulkClass = db._bulk()
+
+    def postRun(self):
+        self.bulkClass.bulkOperatonProcessing()
 
     def run(self,data,persistentData,actionResult):
         relationshipData = helpers.evalDict(self.relationshipData,{"data" : data})
         fromAsset = helpers.evalString(self.fromAsset,{"data" : data})
         toAsset = helpers.evalString(self.toAsset,{"data" : data})
         count = helpers.evalString(self.count,{"data" : data})
-        field = helpers.evalString(self.field,{"data" : data})
-        assetType = helpers.evalString(self.assetType,{"data" : data})
-        assetEntity = helpers.evalString(self.assetEntity,{"data" : data})
-
-        if self.resolveAsset:
-            try:
-                fromAsset = asset._asset().getAsClass(query={ "assetType" : assetType, "entity" : assetEntity, "fields.{0}".format(field) : fromAsset },limit=1,sort=[( "lastSeenTimestamp", -1 )])[0]._id
-            except:
-                if not self.continueAfterResolveError:
-                    actionResult["result"] = True
-                    actionResult["msg"] = "Unable to resolve asset"
-                    actionResult["rc"] = 9
-                    return actionResult
-            try:
-                toAsset = asset._asset().getAsClass(query={ "assetType" : assetType, "entity" : assetEntity, "fields.{0}".format(field) : toAsset },limit=1,sort=[( "lastSeenTimestamp", -1 )])[0]._id
-            except:
-                if not self.continueAfterResolveError:
-                    actionResult["result"] = True
-                    actionResult["msg"] = "Unable to resolve asset"
-                    actionResult["rc"] = 9
-                    return actionResult
 
         timespan = 3600
         if self.timespan > 0:
             timespan = self.timespan
         timespan = helpers.roundTime(roundTo=timespan).timestamp()
 
-        _assetRelationship().addRelationship(self.acl,timespan,fromAsset,toAsset,relationshipData,count)
+        _assetRelationship().addRelationshipBulk(self.acl,timespan,fromAsset,toAsset,relationshipData,count,self.bulkClass)
         actionResult["result"] = True
         actionResult["rc"] = 0
         return actionResult
