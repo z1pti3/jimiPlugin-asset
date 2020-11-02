@@ -51,38 +51,6 @@
 function network(data,HTMLElementID) {
         var network = null;
         var mapping = {};
-        var edgeMapping = {};
-        for (d in data) {
-            d = data[d]
-            var b = null
-            var a = null
-            if (mapping.hasOwnProperty(d[0])) {
-                a = d[0]
-            }
-            if (a == null) {
-                mapping[d[0]] = { "value" : 0 }
-                a = d[0]
-            }
-
-
-            if (mapping.hasOwnProperty(d[1])) {
-                b = d[1]
-            }
-            if (b == null) {
-                mapping[d[1]] = { "value" : 0 }
-                b = d[1]
-            }
-
-	    var key = a+"->"+b;
-            var key2 = b+"->"+a;
-            if ((!edgeMapping.hasOwnProperty(key)) && (!edgeMapping.hasOwnProperty(key2))) {
-                edgeMapping[key] = 1;
-                edgeMapping[key2] = 1;
-                mapping[d[0]]["value"] = mapping[d[0]]["value"] + d[2]
-                mapping[d[1]]["value"] = mapping[d[1]]["value"] + d[2]
-            }
-        }
-
         var nodes = [];
         var edges = [];
         var edgeMapping = {};
@@ -92,42 +60,36 @@ function network(data,HTMLElementID) {
             var b = null;
             var a = null;
             var color = "#4090c9";
-            a = mapping[d[0]];
-            b = mapping[d[1]];
 
             if (d[0] == $('#fromAsset').val() || d[1] == $('#fromAsset').val() ) {
                 color = "#a61919";
-	    }
+	        }
 
-            if (((a["value"] > 1 && b["value"] > 1) && (a["value"] < 25 && b["value"] < 25)) || (d[0] == $('#fromAsset').val() || d[1] == $('#fromAsset').val() )) {
-                if (!a.hasOwnProperty("id")) {
-                    id = nodes.length;
-                    nodes.push({ id: id, label: d[0], value: a["value"], color : color });
-                    mapping[d[0]]["id"] = id;
-                }
-
-                if (!b.hasOwnProperty("id")) {
-                    id = nodes.length;
-                    nodes.push({ id: id, label: d[1], value: b["value"], color : color });
-                    mapping[d[1]]["id"] = id;
-                }
-            } else {
-                a = null;
-                b = null;
+            if (!mapping.hasOwnProperty(d[0])) {
+                id = nodes.length;
+                nodes.push({ id: id, label: d[0], value: 1, color : color });
+                mapping[d[0]] = { id :  id };
             }
+            a = mapping[d[0]]
 
-            if (a != null || b != null) {
-                if (a["id"] != b["id"]) {
-                    var key = a["id"]+"->"+b["id"];
-                    var key2 = b["id"]+"->"+a["id"];
-                    if ((!edgeMapping.hasOwnProperty(key)) && (!edgeMapping.hasOwnProperty(key2))) {
-                        edgeMapping[key] = 1;
-                        edgeMapping[key2] = 1;
-                        edges.push({ 
-                            from: a["id"], 
-                            to: b["id"]
-                        });
-                    }
+            if (!mapping.hasOwnProperty(d[1])) {
+                id = nodes.length;
+                nodes.push({ id: id, label: d[1], value: 1, color : color });
+                mapping[d[1]] = { id :  id };
+            }
+            b = mapping[d[1]]
+
+
+            if (a["id"] != b["id"]) {
+                var key = a["id"]+"->"+b["id"];
+                var key2 = b["id"]+"->"+a["id"];
+                if ((!edgeMapping.hasOwnProperty(key)) && (!edgeMapping.hasOwnProperty(key2))) {
+                    edgeMapping[key] = 1;
+                    edgeMapping[key2] = 1;
+                    edges.push({ 
+                        from: a["id"], 
+                        to: b["id"]
+                    });
                 }
             }
         }
@@ -152,8 +114,8 @@ function network(data,HTMLElementID) {
     nodes: {
       shape: "dot",
       scaling: {
-        min: 10,
-        max: 100,
+        min: 25,
+        max: 25,
       },
       font: {
         size: 30,

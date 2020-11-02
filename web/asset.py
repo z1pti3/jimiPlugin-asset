@@ -30,7 +30,7 @@ def getRelationshipsByTimespan(fromAsset,timespan):
 	relationships = relationship._assetRelationship().getAsClass(sessionData=api.g.sessionData,query={ "timespan" : timespan, "$or" : [ { "fromAsset" : fromAsset },{ "toAsset" : fromAsset } ] })
 	graph = []
 	for relationshipItem in relationships:
-		graph.append([relationshipItem.fromAsset,relationshipItem.toAsset,relationshipItem.count])
+		graph.append([relationshipItem.fromAsset,relationshipItem.toAsset])
 
 	return { "results" : graph }, 200
 
