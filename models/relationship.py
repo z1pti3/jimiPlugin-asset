@@ -40,7 +40,7 @@ class _assetRelationshipUpdate(action._action):
         self.bulkClass = db._bulk()
         cache.globalCache.newCache("assetRelationshipCache")
 
-    def postRun(self):
+    def postRun(self,data,persistentData):
         self.bulkClass.bulkOperatonProcessing()
 
     def run(self,data,persistentData,actionResult):

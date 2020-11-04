@@ -21,7 +21,7 @@ class _assetBulkUpdate(action._action):
 		cache.globalCache.newCache("assetCache")
 		self.bulkClass = db._bulk()
 
-	def postRun(self):
+	def postRun(self,data,persistentData):
 		self.bulkClass.bulkOperatonProcessing()
 
 	def run(self,data,persistentData,actionResult):
@@ -116,7 +116,7 @@ class _assetUpdate(action._action):
 		cache.globalCache.newCache("assetCache")
 		self.bulkClass = db._bulk()
 
-	def postRun(self):
+	def postRun(self,data,persistentData):
 		self.bulkClass.bulkOperatonProcessing()
 
 	def run(self,data,persistentData,actionResult):
