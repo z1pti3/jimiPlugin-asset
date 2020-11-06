@@ -65,6 +65,46 @@ class _assetRelationshipUpdate(action._action):
         actionResult["rc"] = 0
         return actionResult
 
+class _assetRelationshipBulkUpdate(action._action):
+    relationshipData = dict()
+    fromAssetField = str()
+    toAssetField = str()
+    timespan = int()
+    eventField = str()
+
+    def __init__(self):
+        self.bulkClass = db._bulk()
+        cache.globalCache.newCache("assetRelationshipCache")
+
+    def postRun(self):
+        self.bulkClass.bulkOperatonProcessing()
+
+    def run(self,data,persistentData,actionResult):
+        relationshipData = helpers.evalDict(self.relationshipData,{"data" : data})
+        events = helpers.evalString(self.eventField,{"data" : data})
+
+        timespan = 3600
+        if self.timespan > 0:
+            timespan = self.timespan
+        timespan = helpers.roundTime(roundTo=timespan).timestamp()
+
+        orStatement = { "timespan" : timespan, "$or" : [] }
+        for event in events:
+            orStatement["$or"].append({ "fromAsset" : event[self.fromAssetField], "toAsset" : event[self.toAssetField] })
+        
+        results = _assetRelationship().getAsClass(query=orStatement)
+        for event in events:
+            found = False
+            for result in results:
+                if result.fromAsset == event[self.fromAssetField] and result.toAsset == event[self.toAssetField]:
+                    found = True
+            if not found:
+                _assetRelationship().bulkNew(self.acl,timespan,event[self.fromAssetField],event[self.toAssetField],relationshipData,self.bulkClass)
+
+        actionResult["result"] = True
+        actionResult["rc"] = 0
+        return actionResult
+
 def getClassByName(match,sessionData):
     return model._model().query(query={"className" : match})["results"]
 
