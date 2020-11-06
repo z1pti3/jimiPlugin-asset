@@ -88,18 +88,20 @@ class _assetRelationshipBulkUpdate(action._action):
             timespan = self.timespan
         timespan = helpers.roundTime(roundTo=timespan).timestamp()
 
-        orStatement = { "timespan" : timespan, "$or" : [] }
+        orStatement = { "$and" : [ {"timespan" : timespan } ], "$or" : []  }
+        matches={}
         for event in events:
+            matches["{0}->{1}".format(event[self.fromAssetField],event[self.toAssetField])] = event
             orStatement["$or"].append({ "fromAsset" : event[self.fromAssetField], "toAsset" : event[self.toAssetField] })
         
-        results = _assetRelationship().getAsClass(query=orStatement)
-        for event in events:
-            found = False
-            for result in results:
-                if result.fromAsset == event[self.fromAssetField] and result.toAsset == event[self.toAssetField]:
-                    found = True
-            if not found:
-                _assetRelationship().bulkNew(self.acl,timespan,event[self.fromAssetField],event[self.toAssetField],relationshipData,self.bulkClass)
+        results = _assetRelationship().query(query=orStatement,fields=["fromAsset","toAsset"])["results"]
+        for result in results:
+            match = "{0}->{1}".format(result["fromAsset"],result["toAsset"])
+            if match in matches:
+                del matches[match]
+
+        for match in matches:
+            _assetRelationship().bulkNew(self.acl,timespan,matches[match][self.fromAssetField],matches[match][self.toAssetField],relationshipData,self.bulkClass)
 
         actionResult["result"] = True
         actionResult["rc"] = 0
@@ -109,4 +111,8 @@ def getClassByName(match,sessionData):
     return model._model().query(query={"className" : match})["results"]
 
 def getAssetRelationshipObject(match,sessionData,timespan,fromAsset,toAsset):
-    return _assetRelationship().getAsClass(query={ "timespan" : timespan, "fromAsset" : fromAsset, "toAsset" : toAsset })
+    try:
+        _assetRelationship().query(query={ "timespan" : timespan, "fromAsset" : fromAsset, "toAsset" : toAsset },limit=1)["results"][0]
+        return True
+    except:
+        return None
