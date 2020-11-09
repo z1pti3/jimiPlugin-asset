@@ -88,13 +88,11 @@ class _assetRelationshipBulkUpdate(action._action):
             timespan = self.timespan
         timespan = helpers.roundTime(roundTo=timespan).timestamp()
 
-        orStatement = { "$and" : [ {"timespan" : timespan } ], "$or" : []  }
         matches={}
         for event in events:
             matches["{0}->{1}".format(event[self.fromAssetField],event[self.toAssetField])] = event
-            orStatement["$or"].append({ "fromAsset" : event[self.fromAssetField], "toAsset" : event[self.toAssetField] })
         
-        results = _assetRelationship().query(query=orStatement,fields=["fromAsset","toAsset"])["results"]
+        results = _assetRelationship().query(query={"timespan" : timespan },fields=["fromAsset","toAsset"])["results"]
         for result in results:
             match = "{0}->{1}".format(result["fromAsset"],result["toAsset"])
             if match in matches:
