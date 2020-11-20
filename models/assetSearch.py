@@ -9,6 +9,7 @@ class _assetSearch(action._action):
 	search = dict()
 	fields = list()
 	flattenFields = list()
+	return_one = bool()
 
 	def __init__(self):
 		cache.globalCache.newCache("assetSearchCache")
@@ -30,7 +31,11 @@ class _assetSearch(action._action):
 						if flattenField in asset["fields"]:
 							asset[flattenField] = asset["fields"][flattenField]
 							del asset["fields"][flattenField]
-				actionResult["events"].append(asset)
+				if self.return_one:
+					actionResult["event"] = asset
+					break
+				else:
+					actionResult["events"].append(asset)
 		actionResult["result"] = True
 		actionResult["rc"] = 0
 		return actionResult
