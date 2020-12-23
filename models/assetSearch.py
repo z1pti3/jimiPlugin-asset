@@ -62,6 +62,7 @@ class _assetSearchTrigger(trigger._trigger):
 	fields = list()
 	flattenFields = list()
 	return_one = bool()
+	dontCache = bool()
 
 	def __init__(self):
 		cache.globalCache.newCache("assetSearchCache")
@@ -75,17 +76,25 @@ class _assetSearchTrigger(trigger._trigger):
 			if type(value) == str:
 				match += value
 
-		assetList = cache.globalCache.get("assetSearchCache",match,getSearchObject,search,self.fields)
+		if not self.dontCache:
+			# cache does not support nested dicts as these will always be seen as the same
+			assetList = cache.globalCache.get("assetSearchCache",match,getSearchObject,search,self.fields)
+		else:
+			assetList = asset._asset().query(query=search,fields=self.fields)["results"]
+			
 		if assetList is not None:
-			for asset in assetList:
+			for assetItem in assetList:
 				if len(self.flattenFields) > 0:
 					for flattenField in self.flattenFields:
-						if flattenField in asset["fields"]:
-							asset[flattenField] = asset["fields"][flattenField]
-							del asset["fields"][flattenField]
+						if flattenField in assetItem["fields"]:
+							assetItem[flattenField] = assetItem["fields"][flattenField]
+							del assetItem["fields"][flattenField]
 				if self.return_one:
-					if actionResult["event"]["lastUpdateTime"] > latestTime:
-						self.result["events"] = [asset]
+					if "event" in self.result:
+						if self.result["event"]["lastUpdateTime"] > latestTime:
+							self.result["event"] = assetItem
+					else:
+						self.result["event"] = asset
 				else:
 					self.result["events"].append(asset)
 
