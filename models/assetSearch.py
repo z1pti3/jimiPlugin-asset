@@ -23,6 +23,7 @@ class _assetSearch(action._action):
 				match += value
 
 		if not self.dontCache:
+			# cache does not support nested dicts as these will always be seen as the same
 			assetList = cache.globalCache.get("assetSearchCache",match,getSearchObject,search,self.fields)
 		else:
 			assetList = asset._asset().query(query=search,fields=self.fields)["results"]
