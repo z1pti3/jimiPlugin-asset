@@ -9,6 +9,7 @@ class _assetSearch(action._action):
 	search = dict()
 	fields = list()
 	flattenFields = list()
+	dontCache = bool()
 
 	def __init__(self):
 		cache.globalCache.newCache("assetSearchCache")
@@ -21,16 +22,20 @@ class _assetSearch(action._action):
 			if type(value) == str:
 				match += value
 
-		assetList = cache.globalCache.get("assetSearchCache",match,getSearchObject,search,self.fields)
+		if not self.dontCache:
+			assetList = cache.globalCache.get("assetSearchCache",match,getSearchObject,search,self.fields)
+		else:
+			assetList = asset._asset().query(query=search,fields=self.fields)["results"]
+
 		actionResult["events"] = []
 		if assetList is not None:
-			for asset in assetList:
+			for assetItem in assetList:
 				if len(self.flattenFields) > 0:
 					for flattenField in self.flattenFields:
-						if flattenField in asset["fields"]:
-							asset[flattenField] = asset["fields"][flattenField]
-							del asset["fields"][flattenField]
-				actionResult["events"].append(asset)
+						if flattenField in assetItem["fields"]:
+							assetItem[flattenField] = assetItem["fields"][flattenField]
+							del assetItem["fields"][flattenField]
+				actionResult["events"].append(assetItem)
 		actionResult["result"] = True
 		actionResult["rc"] = 0
 		return actionResult
