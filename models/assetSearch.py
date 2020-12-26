@@ -10,7 +10,7 @@ class _assetSearch(action._action):
 	fields = list()
 	flattenFields = list()
 	return_one = bool()
-	dontCache = bool()
+	cache = bool()
 
 	def __init__(self):
 		cache.globalCache.newCache("assetSearchCache")
@@ -24,7 +24,7 @@ class _assetSearch(action._action):
 			if type(value) == str:
 				match += value
 
-		if not self.dontCache:
+		if not self.cache:
 			# cache does not support nested dicts as these will always be seen as the same
 			assetList = cache.globalCache.get("assetSearchCache",match,getSearchObject,search,self.fields)
 		else:
@@ -53,16 +53,13 @@ class _assetSearch(action._action):
 				value = helpers.unicodeEscapeDict(value)
 		return super(_assetSearch, self).setAttribute(attr,value,sessionData=sessionData)
 
-def getSearchObject(match,sessionData,search,fields):
-	return asset._asset().query(query=search,fields=fields)["results"]
-
 
 class _assetSearchTrigger(trigger._trigger):
 	search = dict()
 	fields = list()
 	flattenFields = list()
 	return_one = bool()
-	dontCache = bool()
+	cache = bool()
 
 	def __init__(self):
 		cache.globalCache.newCache("assetSearchCache")
@@ -76,7 +73,7 @@ class _assetSearchTrigger(trigger._trigger):
 			if type(value) == str:
 				match += value
 
-		if not self.dontCache:
+		if not self.cache:
 			# cache does not support nested dicts as these will always be seen as the same
 			assetList = cache.globalCache.get("assetSearchCache",match,getSearchObject,search,self.fields)
 		else:
