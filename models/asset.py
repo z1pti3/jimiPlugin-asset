@@ -7,7 +7,7 @@ class _asset(db._document):
     name = str()
     entity = str()
     assetType = str()
-    lastSeen = dict()
+    lastSeen = dict() # Maybe better as a list of items to improve mongoDB intergration? 
     lastSeenTimestamp = float()
     fields = dict()
 
