@@ -11,6 +11,7 @@ class _assetBulkUpdate(action._action):
 	updateTime = str()
 	updateSource = str()
 	sourcePriority = int()
+	sourcePriorityMaxAge = 86400
 	assetData = dict()
 	replaceExisting = bool()
 	delayedUpdate = int()
@@ -77,6 +78,7 @@ class _assetBulkUpdate(action._action):
 			# Working out priority and define fields
 			if assetChanged:
 				foundValues = {}
+				now = time.time()
 				blacklist = ["lastUpdate","priority"]
 				for source, sourceValue in assetItem.lastSeen.items():
 					for key, value in sourceValue.items():
@@ -84,7 +86,7 @@ class _assetBulkUpdate(action._action):
 							if key not in foundValues:
 								foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
 							else:
-								if sourceValue["priority"] < foundValues[key]["priority"]:
+								if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + self.sourcePriorityMaxAge) > now:
 									foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
 				assetItem.fields = {}
 				for key, value in foundValues.items():
@@ -107,6 +109,7 @@ class _assetUpdate(action._action):
 	updateTime = str()
 	updateSource = str()
 	sourcePriority = int()
+	sourcePriorityMaxAge = 86400
 	assetFields = dict()
 	replaceExisting = bool()
 	delayedUpdate = int()
@@ -212,6 +215,7 @@ class _assetUpdate(action._action):
 		# Working out priority and define fields
 		if assetChanged:
 			foundValues = {}
+			now = time.time()
 			blacklist = ["lastUpdate","priority"]
 			for source, sourceValue in assetItem.lastSeen.items():
 				for key, value in sourceValue.items():
@@ -219,7 +223,7 @@ class _assetUpdate(action._action):
 						if key not in foundValues:
 							foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
 						else:
-							if sourceValue["priority"] < foundValues[key]["priority"]:
+							if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + self.sourcePriorityMaxAge) > now:
 								foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
 			assetItem.fields = {}
 			for key, value in foundValues.items():
