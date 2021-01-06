@@ -1,7 +1,7 @@
 from core import plugin, model
 
 class _asset(plugin._plugin):
-    version = 0.6
+    version = 0.61
 
     def install(self):
         # Register models
