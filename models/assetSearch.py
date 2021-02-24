@@ -30,7 +30,10 @@ class _assetSearch(action._action):
 		else:
 			assetList = asset._asset().query(query=search,fields=self.fields)["results"]
 
-		actionResult["events"] = []
+		if self.return_one:
+			actionResult["event"] = ""
+		else:
+			actionResult["events"] = []
 		if assetList is not None:
 			for assetItem in assetList:
 				if len(self.flattenFields) > 0:
@@ -39,7 +42,7 @@ class _assetSearch(action._action):
 							assetItem[flattenField] = assetItem["fields"][flattenField]
 							del assetItem["fields"][flattenField]
 				if self.return_one:
-					if actionResult["event"]["lastUpdateTime"] > latestTime:
+					if assetItem["lastUpdateTime"] > latestTime:
 						actionResult["event"] = assetItem
 				else:
 					actionResult["events"].append(assetItem)
