@@ -82,9 +82,9 @@ class _assetUpdate(action._action):
 		
 		# Converting millsecond int epoch into epoch floats
 		currentTimestamp = assetItem.lastSeen[updateSource]["lastUpdate"]
-		while len(str(currentTimestamp).split("."[0])) > 10:
+		while len(str(currentTimestamp).split(".")[0]) > 10:
 			currentTimestamp = currentTimestamp / 10
-		while len(str(updateTime).split("."[0])) > 10:
+		while len(str(updateTime).split(".")[0]) > 10:
 			updateTime = updateTime / 10
 		
 		newTimestamp = None
