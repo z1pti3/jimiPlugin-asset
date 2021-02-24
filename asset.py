@@ -12,6 +12,7 @@ class _asset(plugin._plugin):
         model.registerModel("assetSearchTrigger","_assetSearchTrigger","_action","plugins.asset.models.assetSearch")
         model.registerModel("assetRelationship","_assetRelationship","_document","plugins.asset.models.relationship")
         model.registerModel("assetRelationshipUpdate","_assetRelationshipUpdate","_action","plugins.asset.models.relationship")
+        model.registerModel("assetRelationshipBulkUpdate","_assetRelationshipBulkUpdate","_action","plugins.asset.models.relationship")
         return True
 
     def uninstall(self):
@@ -23,6 +24,7 @@ class _asset(plugin._plugin):
         model.deregisterModel("assetSearchTrigger","_assetSearchTrigger","_action","plugins.asset.models.assetSearch")
         model.deregisterModel("assetRelationship","_assetRelationship","_document","plugins.asset.models.relationship")
         model.deregisterModel("assetRelationshipUpdate","_assetRelationshipUpdate","_action","plugins.asset.models.relationship")
+        model.deregisterModel("assetRelationshipBulkUpdate","_assetRelationshipBulkUpdate","_action","plugins.asset.models.relationship")
         return True
     
     def upgrade(self,LatestPluginVersion):
@@ -33,6 +35,8 @@ class _asset(plugin._plugin):
         if self.version < 0.4:
             model.registerModel("assetRelationship","_assetRelationship","_document","plugins.asset.models.relationship")
             model.registerModel("assetRelationshipUpdate","_assetRelationshipUpdate","_action","plugins.asset.models.relationship")
+        if self.version < 0.3:
+            model.registerModel("assetBulkUpdate","_assetBulkUpdate","_action","plugins.asset.models.action")
         if self.version < 0.2:
             model.registerModel("assetSearch","_assetSearch","_action","plugins.asset.models.assetSearch")
         return True
