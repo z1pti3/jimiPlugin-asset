@@ -36,6 +36,10 @@ class _assetBulkUpdate(action._action):
 
 		# Updating existing
 		for assetItem in existingAssets:
+
+			if updateSource not in assetItem.lastSeen:
+				assetItem.lastSeen[updateSource] = { "lastUpdate" : 0 }
+
 			# Converting millsecond int epoch into epoch floats
 			currentTimestamp = assetItem.lastSeen[updateSource]["lastUpdate"]
 			if len(str(currentTimestamp).split(".")[0]) == 13:
@@ -177,7 +181,7 @@ class _assetUpdate(action._action):
 			return actionResult
 
 		if updateSource not in assetItem.lastSeen:
-			assetItem.lastSeen[updateSource] = {}
+			assetItem.lastSeen[updateSource] = { "lastUpdate" : 0 }
 		
 		# Converting millsecond int epoch into epoch floats
 		currentTimestamp = assetItem.lastSeen[updateSource]["lastUpdate"]
