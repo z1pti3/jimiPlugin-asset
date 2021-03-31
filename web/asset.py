@@ -11,7 +11,7 @@ from core import api, helpers, db
 
 pluginPages = Blueprint('assetPages', __name__, template_folder="templates")
 
-@pluginPages.route("/asset/")
+@pluginPages.route("/")
 def mainAssetPage():
 	#assets = asset._asset().getAsClass(api.g.sessionData,query={},fields=["_id","name","type","classID"])
 	foundAsset = []
@@ -19,11 +19,11 @@ def mainAssetPage():
 	#    foundAsset.append({ "_id" : assetObject._id, "name" : assetObject.name, "type" : assetObject.assetType, "lastSeen" : assetObject.lastSeen })
 	return render_template("asset.html",asset=foundAsset)
 
-@pluginPages.route("/asset/relationship/")
+@pluginPages.route("/relationship/")
 def getAssetRelationshipPage():
 	return render_template("relationship.html")
 
-@pluginPages.route("/asset/relationship/<fromAsset>/<timespan>/")
+@pluginPages.route("/relationship/<fromAsset>/<timespan>/")
 def getRelationshipsByTimespan(fromAsset,timespan):
 	timespan = helpers.roundTime(roundTo=int(timespan)).timestamp()
 
