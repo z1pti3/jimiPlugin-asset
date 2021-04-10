@@ -8,6 +8,8 @@ from plugins.asset.models import asset, relationship
 
 from core import api, helpers, db
 
+from web import ui
+
 import jimi
 
 
@@ -15,11 +17,14 @@ pluginPages = Blueprint('assetPages', __name__, template_folder="templates")
 
 @pluginPages.route("/")
 def mainAssetPage():
-	#assets = asset._asset().getAsClass(api.g.sessionData,query={},fields=["_id","name","type","classID"])
-	foundAsset = []
-	#for assetObject in assets:
-	#    foundAsset.append({ "_id" : assetObject._id, "name" : assetObject.name, "type" : assetObject.assetType, "lastSeen" : assetObject.lastSeen })
 	return render_template("asset.html",CSRF=jimi.api.g.sessionData["CSRF"])
+
+@pluginPages.route("/assetItem/")
+def singleAsset():
+	assetName = jimi.api.request.args.get('value')
+	assetObject = asset._asset().query(sessionData=api.g.sessionData,query={ "name" : assetName })["results"][0]
+	assetDetails = ui.dictTable(assetObject)
+	return render_template("assetItem.html",CSRF=jimi.api.g.sessionData["CSRF"],assetDetails=assetDetails)
 
 @pluginPages.route("/relationship/")
 def getAssetRelationshipPage():
@@ -36,151 +41,142 @@ def getRelationshipsByTimespan(fromAsset,timespan):
 
 	return { "results" : graph }, 200
 
-@pluginPages.route("/radar/",methods=["POST"])
-def radar():
-	result = { "labels" : [], "datasets" : [], "updates" : [], "deletes" : [] }
+@pluginPages.route("/radarSources/",methods=["POST"])
+def radarSources():
+	radar = ui.radar()
+	sources = asset._asset().groupby(sessionData=api.g.sessionData,field="lastSeen.source")
+	data = {}
+	for source in sources:
+		for _id in source["_id"]:
+			if _id not in data:
+				data[_id] = 0
+			data[_id] += source["_count"]
+	dataPoints = []
+	for key, value in data.items():
+		radar.addLabel(key)
+		dataPoints.append(value)
+	radar.addDataset("Assets",dataPoints)
 	data = json.loads(jimi.api.request.data)
-	labels = ['Sophos','AD','FortiClient','Snow','Humio','Glpi']
-	if labels != data["labels"]:
-		result["labels"] = labels
-	
-	datasets = { 
-		"Assets" : {
-			"label": 'Assets',
-			"data": [65, 59, 90, 81, 56, 10],
-			"fill": True,
-			"backgroundColor": 'rgba(255, 99, 132, 0.2)',
-			"borderColor": 'rgb(255, 99, 132)',
-			"pointBackgroundColor": 'rgb(255, 99, 132)'
-		}
-	}
+	return radar.generate(data), 200
 
-	for index, value in enumerate(data["datasets"]):
-		if value["label"] not in datasets:
-			result["deletes"].append({ "index" : index })
-		else:
-			if value["data"] != datasets[value["label"]]["data"]:
-				result["updates"].append({ "index" : index, "data" : datasets[value["label"]]["data"] })
-			del datasets[value["label"]]
-	
-	for dataset in datasets:
-		result["datasets"].append(datasets[dataset])
-
-	return result, 200
-
-@pluginPages.route("/doughnut/",methods=["POST"])
-def doughnut():
-	result = { "labels" : [], "datasets" : [], "updates" : [], "deletes" : [] }
+@pluginPages.route("/doughnutEntity/",methods=["POST"])
+def doughnutEntity():
+	doughnut = ui.doughnut()
+	entities = asset._asset().groupby(sessionData=api.g.sessionData,field="entity")
+	data = []
+	for entity in entities:
+		doughnut.addLabel(entity["_id"])
+		data.append(entity["_count"])
+	doughnut.addDataset("Assets",data)
 	data = json.loads(jimi.api.request.data)
-	labels = ['Sophos','AD','FortiClient','Snow','Humio','Glpi']
-	if labels != data["labels"]:
-		result["labels"] = labels
-	
-	datasets = { 
-		"OS" : {
-				"label": 'OS',
-				"data": [65, 59, 90, 81, 56, 55],
-				"backgroundColor": ['red',"blue","green","yellow","orange","white"],
+	return doughnut.generate(data), 200
+
+@pluginPages.route("/lineCreated/",methods=["POST"])
+def lineCreated():
+	line = ui.line()
+	aggregateStatement = [
+		{
+			"$match" : {
+				"creationTime" : { "$gt" : time.time() - (86400 * 365) }
+			}
+		},
+		{
+			"$project" : {
+				"_id" : 0,
+				"date" : { "$toDate" : "$_id" }
+			}
+		},
+		{
+			"$group" : {
+				"_id" : { "$month" : "$date" },
+				"_count" : { "$sum" : 1 }
+			}
+		},
+		{
+			"$sort" : {
+				"_id" : 1
+			}
 		}
-	}
+	]
+	timeline = asset._asset().aggregate(sessionData=api.g.sessionData,aggregateStatement=aggregateStatement)
+	data = []
+	for item in timeline:
+		line.addLabel(item["_id"])
+		data.append(item["_count"])
+	line.addDataset("Assets",data)
+	data = json.loads(jimi.api.request.data)
+	return line.generate(data), 200
 
-	for index, value in enumerate(data["datasets"]):
-		if value["label"] not in datasets:
-			result["deletes"].append({ "index" : index })
-		else:
-			if value["data"] != datasets[value["label"]]["data"]:
-				result["updates"].append({ "index" : index, "data" : datasets[value["label"]]["data"] })
-			del datasets[value["label"]]
-	
-	for dataset in datasets:
-		result["datasets"].append(datasets[dataset])
-
-	return result, 200
+@pluginPages.route("/tableAssetList/<action>/",methods=["GET"])
+def table(action):
+	fields = [ "name", "entity", "assetType" ]
+	searchValue = jimi.api.request.args.get('search[value]')
+	if searchValue:
+		print(searchValue)
+		searchFilter = { "name" : { "$regex" : ".*{0}.*".format(searchValue) } }
+	else:
+		searchFilter = {}
+	pagedData = jimi.db._paged(asset._asset,sessionData=api.g.sessionData,fields=fields,query=searchFilter,maxResults=200)
+	table = ui.table(fields,200,pagedData.total)
+	if action == "build":
+		return table.getColumns() ,200
+	elif action == "poll":
+		start = int(jimi.api.request.args.get('start'))
+		data = pagedData.getOffset(start,queryMode=1)
+		table.setRows(data,links=[{ "field" : "name", "url" : "/plugin/asset/" }])
+		return table.generate(int(jimi.api.request.args.get('draw'))) ,200
 
 @pluginPages.route("/pie/",methods=["POST"])
 def pie():
-	result = { "labels" : [], "datasets" : [], "updates" : [], "deletes" : [] }
+	pie = ui.pie()
+	pie.labels = ['Sophos','AD','FortiClient','Snow','Humio','Glpi']
+	pie.addDataset("Assets",[65, 59, 90, 81, 56, 10])
 	data = json.loads(jimi.api.request.data)
-	labels = ['Sophos','AD','FortiClient','Snow','Humio','Glpi']
-	if labels != data["labels"]:
-		result["labels"] = labels
-	
-	datasets = { 
-		"OS" : {
-				"label": 'OS',
-				"data": [65, 59, 90, 81, 56, 55],
-				"backgroundColor": ['red',"blue","green","yellow","orange","white"],
-		}
-	}
-
-	for index, value in enumerate(data["datasets"]):
-		if value["label"] not in datasets:
-			result["deletes"].append({ "index" : index })
-		else:
-			if value["data"] != datasets[value["label"]]["data"]:
-				result["updates"].append({ "index" : index, "data" : datasets[value["label"]]["data"] })
-			del datasets[value["label"]]
-	
-	for dataset in datasets:
-		result["datasets"].append(datasets[dataset])
-
-	return result, 200
+	return pie.generate(data), 200
 
 @pluginPages.route("/bar/",methods=["POST"])
 def bar():
-	result = { "labels" : [], "datasets" : [], "updates" : [], "deletes" : [] }
+	bar = ui.bar()
+	bar.labels = ['Sophos','AD','FortiClient','Snow','Humio','Glpi']
+	bar.addDataset("Assets",[65, 59, 90, 81, 56, 10])
 	data = json.loads(jimi.api.request.data)
-	labels = ['Sophos','AD','FortiClient','Snow','Humio','Glpi']
-	if labels != data["labels"]:
-		result["labels"] = labels
-	
-	datasets = { 
-		"OS" : {
-				"label": 'OS',
-				"data": [65, 59, 90],
-				"backgroundColor": ['red'],
-		}
-	}
-
-	for index, value in enumerate(data["datasets"]):
-		if value["label"] not in datasets:
-			result["deletes"].append({ "index" : index })
-		else:
-			if value["data"] != datasets[value["label"]]["data"]:
-				result["updates"].append({ "index" : index, "data" : datasets[value["label"]]["data"] })
-			del datasets[value["label"]]
-	
-	for dataset in datasets:
-		result["datasets"].append(datasets[dataset])
-
-	return result, 200
+	return bar.generate(data), 200
 
 
 @pluginPages.route("/line/",methods=["POST"])
 def line():
-	result = { "labels" : [], "datasets" : [], "updates" : [], "deletes" : [] }
+	line = ui.line()
+	line.labels = ['Sophos','AD','FortiClient','Snow','Humio','Glpi']
+	line.addDataset("Assets",[65, 59, 90, 81, 56, 10])
 	data = json.loads(jimi.api.request.data)
-	labels = ['Sophos','AD','FortiClient','Snow','Humio','Glpi']
-	if labels != data["labels"]:
-		result["labels"] = labels
-	
-	datasets = { 
-		"OS" : {
-				"label": 'OS',
-				"data": [65, 59, 90],
-				"backgroundColor": ['red'],
-		}
+	return line.generate(data), 200
+
+@pluginPages.route("/network/",methods=["GET"])
+def network():
+    nodesDict = { 
+		"1" : { "id" : "1", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } },
+		"2" : { "id" : "2", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } },
+		"3" : { "id" : "3", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } },
+		"4" : { "id" : "4", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } },
+		"5" : { "id" : "5", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } }
 	}
+    edgesDict = {
+		"1-2" : { "id" : "1-2", "from" : "1", "to" : "2" },
+		"1-3" : { "id" : "1-3", "from" : "1", "to" : "3" },
+		"3-4" : { "id" : "3-4", "from" : "3", "to" : "4" },
+		"4-5" : { "id" : "4-5", "from" : "4", "to" : "5" }
+	}
+            
+    nodes = [ x for x in nodesDict.values() ]
+    edges = [ x for x in edgesDict.values() ]
 
-	for index, value in enumerate(data["datasets"]):
-		if value["label"] not in datasets:
-			result["deletes"].append({ "index" : index })
-		else:
-			if value["data"] != datasets[value["label"]]["data"]:
-				result["updates"].append({ "index" : index, "data" : datasets[value["label"]]["data"] })
-			del datasets[value["label"]]
-	
-	for dataset in datasets:
-		result["datasets"].append(datasets[dataset])
+    return { "nodes" : nodes, "edges" : edges }, 200
 
-	return result, 200
+@pluginPages.route("/timeline/",methods=["GET"])
+def timeline():
+    timeline = []
+
+    formatted_date = time.strftime('%Y-%m-%d %H:%M:%S',  time.localtime(time.time()))
+    timeline.append({ "id" : len(timeline), "content" : "test", "start" : formatted_date })
+
+    return { "timeline" : timeline }, 200

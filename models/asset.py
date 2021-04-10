@@ -7,7 +7,7 @@ class _asset(db._document):
     name = str()
     entity = str()
     assetType = str()
-    lastSeen = dict() # Maybe better as a list of items to improve mongoDB intergration? 
+    lastSeen = list()
     lastSeenTimestamp = float()
     fields = dict()
 
@@ -18,7 +18,7 @@ class _asset(db._document):
         self.name = name
         self.entity = entity
         self.assetType = assetType
-        self.lastSeen = {updateSource: {**fields, **{"priority":priority}}}
+        self.lastSeen = [ {**fields, **{"priority":priority, "source" : updateSource}} ]
         self.lastSeenTimestamp = lastSeenTimestamp
         self.fields = fields
         return super(_asset, self).new()
@@ -28,7 +28,7 @@ class _asset(db._document):
         self.name = name
         self.entity = entity
         self.assetType = assetType
-        self.lastSeen = {updateSource: {**fields, **{"priority":priority}}}
+        self.lastSeen = [ {**fields, **{"priority":priority, "source" : updateSource}} ]
         self.lastSeenTimestamp = lastSeenTimestamp
         self.fields = fields
         return super(_asset, self).bulkNew(bulkClass)

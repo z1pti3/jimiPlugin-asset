@@ -1,0 +1,11 @@
+{% extends "jimiLayout4.html" %}
+
+{% block head %}
+    {{ jimi.visjs() }}
+{% endblock %}
+
+{% block block1 %}
+    <label class="unselectable panelHeader">Details</label>
+    <br/>
+    {{ assetDetails|safe }}
+{% endblock %}

@@ -1,13 +1,23 @@
-{% extends "jimiLayout1.html" %}
+{% extends "jimiLayout3.html" %}
 
 {% block head %}
     {{ jimi.charts() }}
+    {{ jimi.tables() }}
+    {{ jimi.visjs() }}
 {% endblock %}
 
 {% block block1 %}
-    {{ jimi.radar("1","Example 1","radar/") }}
+    {{ jimi.radar("1","Assets by Source","radarSources/") }}
 {% endblock %}
 
 {% block block2 %}
-    {{ jimi.pie("2","Example 2","pie/") }}
+    {{ jimi.doughnut("2","Assets by Entity","doughnutEntity/") }}
+{% endblock %}
+
+{% block block3 %}
+    {{ jimi.line("3","Assets Created by time","lineCreated/") }}
+{% endblock %}
+
+{% block block4 %}
+    {{ jimi.table("4","Asset List","tableAssetList/") }}
 {% endblock %}

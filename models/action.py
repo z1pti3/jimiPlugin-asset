@@ -37,13 +37,19 @@ class _assetBulkUpdate(action._action):
 		# Updating existing
 		for assetItem in existingAssets:
 
-			if updateSource not in assetItem.lastSeen:
-				assetItem.lastSeen[updateSource] = { "lastUpdate" : 0 }
-			elif "lastUpdate" not in assetItem.lastSeen[updateSource]:
-				assetItem.lastSeen[updateSource]["lastUpdate"] = 0
+			lastSeen = None
+			for source in assetItem.lastSeen:
+				if source["source"] == updateSource:
+					if "lastUpdate" not in lastSeen:
+						lastSeen["lastUpdate"] = 0
+					lastSeen = source
+					break
+			if not lastSeen:
+				assetItem.lastSeen.append({ "source" : updateSource, "lastUpdate" : 0 })
+				lastSeen = assetItem.lastSeen[-1]
 
 			# Converting millsecond int epoch into epoch floats
-			currentTimestamp = assetItem.lastSeen[updateSource]["lastUpdate"]
+			currentTimestamp = lastSeen["lastUpdate"]
 			if len(str(currentTimestamp).split(".")[0]) == 13:
 				currentTimestamp = currentTimestamp / 1000
 			updateTime = assetData[assetItem.name]["lastUpdate"]
@@ -74,20 +80,20 @@ class _assetBulkUpdate(action._action):
 					assetItem.lastSeenTimestamp = newTimestamp
 
 				if self.replaceExisting:
-					assetItem.lastSeen[updateSource] = assetData[assetItem.name]
+					lastSeen = assetData[assetItem.name]
 				else:
 					for key, value in assetData[assetItem.name].items():
-						assetItem.lastSeen[updateSource][key] = value
+						lastSeen[key] = value
 
-				assetItem.lastSeen[updateSource]["priority"] = self.sourcePriority
-				assetItem.lastSeen[updateSource]["lastUpdate"] = newTimestamp
+				lastSeen["priority"] = self.sourcePriority
+				lastSeen["lastUpdate"] = newTimestamp
 
 			# Working out priority and define fields
 			if assetChanged:
 				foundValues = {}
 				now = time.time()
 				blacklist = ["lastUpdate","priority"]
-				for source, sourceValue in assetItem.lastSeen.items():
+				for sourceValue in assetItem.lastSeen:
 					for key, value in sourceValue.items():
 						if key not in blacklist:
 							if key not in foundValues:
@@ -156,16 +162,11 @@ class _assetUpdate(action._action):
 			return actionResult
 
 		assetChanged = False
-		# Merging and removing entires if more than one result is found
+		# Removing entires if more than one result is found
 		if len(assetItem) > 1:
 			newestItem = assetItem[0]
 			for singleAssetItem in assetItem:
 				if newestItem.lastUpdateTime < singleAssetItem.lastUpdateTime:
-					for key, value in singleAssetItem.lastSeen.items():
-						if key not in newestItem.lastSeen:
-							newestItem.lastSeen[key] = value
-						elif value["lastUpdate"] < newestItem.lastSeen[key]["lastUpdate"]:
-							newestItem.lastSeen[key] = value
 					singleAssetItem.delete()
 				else:
 					newestItem.delete()
@@ -182,13 +183,19 @@ class _assetUpdate(action._action):
 			actionResult["rc"] = 404
 			return actionResult
 
-		if updateSource not in assetItem.lastSeen:
-			assetItem.lastSeen[updateSource] = { "lastUpdate" : 0 }
-		elif "lastUpdate" not in assetItem.lastSeen[updateSource]:
-			assetItem.lastSeen[updateSource]["lastUpdate"] = 0
+		lastSeen = None
+		for source in assetItem.lastSeen:
+			if source["source"] == updateSource:
+				if "lastUpdate" not in lastSeen:
+					lastSeen["lastUpdate"] = 0
+				lastSeen = source
+				break
+		if not lastSeen:
+			assetItem.lastSeen.append({ "source" : updateSource, "lastUpdate" : 0 })
+			lastSeen = assetItem.lastSeen[-1]
 		
 		# Converting millsecond int epoch into epoch floats
-		currentTimestamp = assetItem.lastSeen[updateSource]["lastUpdate"]
+		currentTimestamp = lastSeen["lastUpdate"]
 		if len(str(currentTimestamp).split(".")[0]) == 13:
 			currentTimestamp = currentTimestamp / 1000
 		if len(str(updateTime).split(".")[0]) == 13:
@@ -220,20 +227,21 @@ class _assetUpdate(action._action):
 				assetItem.lastSeenTimestamp = newTimestamp
 
 			if self.replaceExisting:
-				assetItem.lastSeen[updateSource] = assetFields
+				lastSeen = assetFields
 			else:
 				for key, value in assetFields.items():
-					assetItem.lastSeen[updateSource][key] = value
+					lastSeen[key] = value
 
-			assetItem.lastSeen[updateSource]["priority"] = self.sourcePriority
-			assetItem.lastSeen[updateSource]["lastUpdate"] = newTimestamp
+			lastSeen["priority"] = self.sourcePriority
+			lastSeen["lastUpdate"] = newTimestamp
 
 		# Working out priority and define fields
 		if assetChanged:
 			foundValues = {}
 			now = time.time()
 			blacklist = ["lastUpdate","priority"]
-			for source, sourceValue in assetItem.lastSeen.items():
+
+			for sourceValue in assetItem.lastSeen:
 				for key, value in sourceValue.items():
 					if key not in blacklist:
 						if key not in foundValues:
