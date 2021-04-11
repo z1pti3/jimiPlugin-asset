@@ -30,9 +30,28 @@ def uiSafe(value):
 def mainAssetPage():
 	return render_template("asset.html",CSRF=jimi.api.g.sessionData["CSRF"])
 
-@pluginPages.route("/assetItem/<assetName>/")
-def singleAsset(assetName):
-	assetObject = asset._asset().getAsClass(sessionData=api.g.sessionData,query={ "name" : assetName })[0]
+@pluginPages.route("/tableAssetList/<action>/",methods=["GET"])
+def table(action):
+	fields = [ "name", "entity", "assetType" ]
+	searchValue = jimi.api.request.args.get('search[value]')
+	if searchValue:
+		print(searchValue)
+		searchFilter = { "name" : { "$regex" : ".*{0}.*".format(searchValue) } }
+	else:
+		searchFilter = {}
+	pagedData = jimi.db._paged(asset._asset,sessionData=api.g.sessionData,fields=fields,query=searchFilter,maxResults=200)
+	table = ui.table(fields,200,pagedData.total)
+	if action == "build":
+		return table.getColumns() ,200
+	elif action == "poll":
+		start = int(jimi.api.request.args.get('start'))
+		data = pagedData.getOffset(start,queryMode=1)
+		table.setRows(data,links=[{ "field" : "name", "url" : "/plugin/asset/assetItem/", "fieldValue" : "_id" }])
+		return table.generate(int(jimi.api.request.args.get('draw'))) ,200
+
+@pluginPages.route("/assetItem/<assetID>/")
+def singleAsset(assetID):
+	assetObject = asset._asset().getAsClass(sessionData=api.g.sessionData,id=assetID)[0]
 	assetSources = []
 	for source in assetObject.lastSeen:
 		assetSources.append(source["source"])
@@ -40,9 +59,9 @@ def singleAsset(assetName):
 	return render_template("assetItem.html",CSRF=jimi.api.g.sessionData["CSRF"],assetObject=assetObject,assetSources=assetSources)
 
 
-@pluginPages.route("/assetItem/<assetName>/tableFields/<action>/")
-def singleAssetTableFields(assetName,action):
-	assetObject = asset._asset().getAsClass(sessionData=api.g.sessionData,query={ "name" : assetName })[0]
+@pluginPages.route("/assetItem/<assetID>/tableFields/<action>/")
+def singleAssetTableFields(assetID,action):
+	assetObject = asset._asset().getAsClass(sessionData=api.g.sessionData,id=assetID)[0]
 	total = len(assetObject.fields)
 	columns = ["Field","Value"]
 	table = ui.table(columns,total,total)
@@ -57,9 +76,9 @@ def singleAssetTableFields(assetName,action):
 		return { "draw" : int(jimi.api.request.args.get('draw')), "recordsTable" : total, "recordsFiltered" : total, "recordsTotal" : total, "data" : data } ,200
 
 
-@pluginPages.route("/assetItem/<assetName>/tableFieldsSources/<action>/")
-def singleAssetTableFieldsSources(assetName,action):
-	assetObject = asset._asset().getAsClass(sessionData=api.g.sessionData,query={ "name" : assetName })[0]
+@pluginPages.route("/assetItem/<assetID>/tableFieldsSources/<action>/")
+def singleAssetTableFieldsSources(assetID,action):
+	assetObject = asset._asset().getAsClass(sessionData=api.g.sessionData,id=assetID)[0]
 	total = len(assetObject.fields)
 	columns = ["Source","Fields"]
 	table = ui.table(columns,total,total)
@@ -74,9 +93,9 @@ def singleAssetTableFieldsSources(assetName,action):
 		return { "draw" : int(jimi.api.request.args.get('draw')), "recordsTable" : total, "recordsFiltered" : total, "recordsTotal" : total, "data" : data } ,200
 
 
-@pluginPages.route("/assetItem/<assetName>/networkRelationships/",methods=["GET"])
-def singleAssetNetworkRelationships(assetName):
-	assetObject = asset._asset().getAsClass(sessionData=api.g.sessionData,query={ "name" : assetName })[0]
+@pluginPages.route("/assetItem/<assetID>/networkRelationships/",methods=["GET"])
+def singleAssetNetworkRelationships(assetID):
+	assetObject = asset._asset().getAsClass(sessionData=api.g.sessionData,id=assetID)[0]
 	timespan = helpers.roundTime(roundTo=int("86400")).timestamp()
 	relationships = relationship._assetRelationship().getAsClass(sessionData=api.g.sessionData,query={ "timespan" : timespan, "$or" : [ { "fromAsset" : assetObject.fields["ip"] },{ "toAsset" : assetObject.fields["ip"] } ] })
 
@@ -175,25 +194,6 @@ def lineCreated():
 	line.addDataset("Assets",data)
 	data = json.loads(jimi.api.request.data)
 	return line.generate(data), 200
-
-@pluginPages.route("/tableAssetList/<action>/",methods=["GET"])
-def table(action):
-	fields = [ "name", "entity", "assetType" ]
-	searchValue = jimi.api.request.args.get('search[value]')
-	if searchValue:
-		print(searchValue)
-		searchFilter = { "name" : { "$regex" : ".*{0}.*".format(searchValue) } }
-	else:
-		searchFilter = {}
-	pagedData = jimi.db._paged(asset._asset,sessionData=api.g.sessionData,fields=fields,query=searchFilter,maxResults=200)
-	table = ui.table(fields,200,pagedData.total)
-	if action == "build":
-		return table.getColumns() ,200
-	elif action == "poll":
-		start = int(jimi.api.request.args.get('start'))
-		data = pagedData.getOffset(start,queryMode=1)
-		table.setRows(data,links=[{ "field" : "name", "url" : "/plugin/asset/assetItem/" }])
-		return table.generate(int(jimi.api.request.args.get('draw'))) ,200
 
 @pluginPages.route("/pie/",methods=["POST"])
 def pie():
