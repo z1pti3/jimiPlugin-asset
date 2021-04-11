@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, make_response, g
 from flask import current_app as app
 
 from pathlib import Path
-import time, json, csv, io
+import time, json, csv, io, datetime
 
 from plugins.asset.models import asset, relationship
 
@@ -15,16 +15,85 @@ import jimi
 
 pluginPages = Blueprint('assetPages', __name__, template_folder="templates")
 
+@pluginPages.app_template_filter('from_timestamp')
+def fromTimestamp(value, format="%d/%m/%Y %H:%M:%S"):
+	dt = datetime.datetime.fromtimestamp(value)
+	if value is None:
+		return ""
+	return dt.strftime(format)
+
+@pluginPages.app_template_filter('ui_safe')
+def uiSafe(value):
+	return ui.safe(value)
+
 @pluginPages.route("/")
 def mainAssetPage():
 	return render_template("asset.html",CSRF=jimi.api.g.sessionData["CSRF"])
 
-@pluginPages.route("/assetItem/")
-def singleAsset():
-	assetName = jimi.api.request.args.get('value')
-	assetObject = asset._asset().query(sessionData=api.g.sessionData,query={ "name" : assetName })["results"][0]
-	assetDetails = ui.dictTable(assetObject)
-	return render_template("assetItem.html",CSRF=jimi.api.g.sessionData["CSRF"],assetDetails=assetDetails)
+@pluginPages.route("/assetItem/<assetName>/")
+def singleAsset(assetName):
+	assetObject = asset._asset().getAsClass(sessionData=api.g.sessionData,query={ "name" : assetName })[0]
+	assetSources = []
+	for source in assetObject.lastSeen:
+		assetSources.append(source["source"])
+	assetSources = ", ".join(assetSources)
+	return render_template("assetItem.html",CSRF=jimi.api.g.sessionData["CSRF"],assetObject=assetObject,assetSources=assetSources)
+
+
+@pluginPages.route("/assetItem/<assetName>/tableFields/<action>/")
+def singleAssetTableFields(assetName,action):
+	assetObject = asset._asset().getAsClass(sessionData=api.g.sessionData,query={ "name" : assetName })[0]
+	total = len(assetObject.fields)
+	columns = ["Field","Value"]
+	table = ui.table(columns,total,total)
+	if action == "build":
+		return table.getColumns() ,200
+	elif action == "poll":
+		# Custom table data so it can be vertical
+		data = []
+		for k,v in assetObject.fields.items():
+			data.append([ui.safe(k),ui.safe(v)])
+		table.data = data
+		return { "draw" : int(jimi.api.request.args.get('draw')), "recordsTable" : total, "recordsFiltered" : total, "recordsTotal" : total, "data" : data } ,200
+
+
+@pluginPages.route("/assetItem/<assetName>/tableFieldsSources/<action>/")
+def singleAssetTableFieldsSources(assetName,action):
+	assetObject = asset._asset().getAsClass(sessionData=api.g.sessionData,query={ "name" : assetName })[0]
+	total = len(assetObject.fields)
+	columns = ["Source","Fields"]
+	table = ui.table(columns,total,total)
+	if action == "build":
+		return table.getColumns() ,200
+	elif action == "poll":
+		# Custom table data so it can be vertical
+		data = []
+		for source in assetObject.lastSeen:
+			data.append([ui.safe(source["source"]),ui.dictTable(source)])
+		table.data = data
+		return { "draw" : int(jimi.api.request.args.get('draw')), "recordsTable" : total, "recordsFiltered" : total, "recordsTotal" : total, "data" : data } ,200
+
+
+@pluginPages.route("/assetItem/<assetName>/networkRelationships/",methods=["GET"])
+def singleAssetNetworkRelationships(assetName):
+    nodesDict = { 
+		"1" : { "id" : "1", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } },
+		"2" : { "id" : "2", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } },
+		"3" : { "id" : "3", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } },
+		"4" : { "id" : "4", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } },
+		"5" : { "id" : "5", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } }
+	}
+    edgesDict = {
+		"1-2" : { "id" : "1-2", "from" : "1", "to" : "2" },
+		"1-3" : { "id" : "1-3", "from" : "1", "to" : "3" },
+		"3-4" : { "id" : "3-4", "from" : "3", "to" : "4" },
+		"4-5" : { "id" : "4-5", "from" : "4", "to" : "5" }
+	}
+            
+    nodes = [ x for x in nodesDict.values() ]
+    edges = [ x for x in edgesDict.values() ]
+
+    return { "nodes" : nodes, "edges" : edges }, 200
 
 @pluginPages.route("/relationship/")
 def getAssetRelationshipPage():
@@ -123,7 +192,7 @@ def table(action):
 	elif action == "poll":
 		start = int(jimi.api.request.args.get('start'))
 		data = pagedData.getOffset(start,queryMode=1)
-		table.setRows(data,links=[{ "field" : "name", "url" : "/plugin/asset/" }])
+		table.setRows(data,links=[{ "field" : "name", "url" : "/plugin/asset/assetItem/" }])
 		return table.generate(int(jimi.api.request.args.get('draw'))) ,200
 
 @pluginPages.route("/pie/",methods=["POST"])
