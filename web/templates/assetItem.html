@@ -9,41 +9,52 @@
         {{ jimi.tables() }}
         {{ jimi.visjs() }}
         {{ jimi.theme() }}
+        <style>
+            .fixNetworkHeight {
+                height: calc(100% - 25px);
+            }
+        </style>
     </head>
     <body class="overflow-auto">
         <div class="container-fluid h-100">
             <div class="row g-0 justify-content-md-center min-vh-100">
                 <div class="col">
                     <div class="d-flex flex-column h-100">
-                        <div class="row g-0 m-1 mt-2 justify-content-md-center">
-                            <div class="col col-sm-2 mx-1 text-center panel" style="height: 100px;">
+                        <div class="row g-0 mt-2 justify-content-md-center">
+                            <div class="col mx-1 text-center panel" style="height: 100px;">
                                 <label class="unselectable panelHeader">Name</label>
                                 <h2>{{ assetObject.name|ui_safe }}</h2>
                             </div>
-                            <div class="col col-sm-2 mx-1 text-center panel" style="height: 100px;">
+                            <div class="col mx-1 text-center panel" style="height: 100px;">
                                 <label class="unselectable panelHeader">Type</label>
                                 <h2>{{ assetObject.assetType|ui_safe }}</h2>
                             </div>
-                            <div class="col col-sm-2 mx-1 text-center panel" style="height: 100px;">
+                            <div class="col mx-1 text-center panel" style="height: 100px;">
                                 <label class="unselectable panelHeader">Last Seen</label>
                                 <h2>{{ assetObject.creationTime|from_timestamp()|ui_safe }}</h2>
                             </div>
-                            <div class="col col-sm-2 mx-1 text-center panel" style="height: 100px;">
+                            <div class="col mx-1 text-center panel" style="height: 100px;">
                                 <label class="unselectable panelHeader">Sources</label>
                                 <h6>{{ assetSources|ui_safe }}</h6>
                             </div>
                         </div>
-                        <div class="row g-0 m-1 justify-content-md-center flex-grow-1">
-                            <div class="col col-sm-5 mx-1 panel">
-                                {{ jimi.table("1","Fields","tableFields/") }}
+                        <div class="row g-0 justify-content-md-center flex-grow-1 h-100">
+                            <div class="col col-sm-4">
+                                <div class="row g-0 justify-content-md-center h-50">
+                                    <div class="col col-sm m-1 panel">
+                                        {{ jimi.table("1","Fields","tableFields/") }}
+                                    </div>
+                                </div>
+                                <div class="row g-0 justify-content-md-center h-50">
+                                    <div class="col col-sm m-1 panel">
+                                        {{ jimi.table("2","Source Details","tableFieldsSources/") }}
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col col-sm-5 mx-1 panel">
-                                {{ jimi.table("2","Source Details","tableFieldsSources/") }}
-                            </div>
-                        </div>
-                        <div class="row g-0 m-1 mb-3 justify-content-md-center flex-grow-1" style="max-height: 40%;">
-                            <div class="col col-sm-5 panel">
-                                {{ jimi.visjsnetwork("3","Relationships","networkRelationships/","true") }}
+                            <div class="col col-sm m-1 panel">
+                                <div class="row g-0 justify-content-md-center fixNetworkHeight">
+                                    {{ jimi.visjsnetwork("3","Relationships","networkRelationships/","true") }}
+                                </div>
                             </div>
                         </div>
                     </div>
