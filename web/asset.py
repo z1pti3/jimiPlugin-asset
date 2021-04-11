@@ -103,7 +103,6 @@ def table(action):
 	fields = [ "name", "entity", "assetType" ]
 	searchValue = jimi.api.request.args.get('search[value]')
 	if searchValue:
-		print(searchValue)
 		searchFilter = { "$or" : [ 
 			{ "name" : { "$regex" : ".*{0}.*".format(searchValue) } },
 			{ "entity" : { "$regex" : ".*{0}.*".format(searchValue) } },
