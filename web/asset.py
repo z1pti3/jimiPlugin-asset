@@ -76,24 +76,24 @@ def singleAssetTableFieldsSources(assetName,action):
 
 @pluginPages.route("/assetItem/<assetName>/networkRelationships/",methods=["GET"])
 def singleAssetNetworkRelationships(assetName):
-    nodesDict = { 
-		"1" : { "id" : "1", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } },
-		"2" : { "id" : "2", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } },
-		"3" : { "id" : "3", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } },
-		"4" : { "id" : "4", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } },
-		"5" : { "id" : "5", "label" : "1", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } }
-	}
-    edgesDict = {
-		"1-2" : { "id" : "1-2", "from" : "1", "to" : "2" },
-		"1-3" : { "id" : "1-3", "from" : "1", "to" : "3" },
-		"3-4" : { "id" : "3-4", "from" : "3", "to" : "4" },
-		"4-5" : { "id" : "4-5", "from" : "4", "to" : "5" }
-	}
-            
-    nodes = [ x for x in nodesDict.values() ]
-    edges = [ x for x in edgesDict.values() ]
+	assetObject = asset._asset().getAsClass(sessionData=api.g.sessionData,query={ "name" : assetName })[0]
+	timespan = helpers.roundTime(roundTo=int("86400")).timestamp()
+	relationships = relationship._assetRelationship().getAsClass(sessionData=api.g.sessionData,query={ "timespan" : timespan, "$or" : [ { "fromAsset" : assetObject.fields["ip"] },{ "toAsset" : assetObject.fields["ip"] } ] })
 
-    return { "nodes" : nodes, "edges" : edges }, 200
+	nodesDict = {}
+	edgesDict = {}
+	for relationshipItem in relationships:
+		if relationshipItem.fromAsset not in nodesDict:
+			nodesDict[relationshipItem.fromAsset] = { "id" : relationshipItem.fromAsset, "label" : relationshipItem.fromAsset, "shape" : "image", "image" : "/static/img/computer.svg", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } }
+		if relationshipItem.toAsset not in nodesDict:
+			nodesDict[relationshipItem.toAsset] = { "id" : relationshipItem.toAsset, "label" : relationshipItem.toAsset, "shape" : "image", "image" : "/static/img/computer.svg", "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } }
+		key = "{0}-{1}".format(relationshipItem.fromAsset,relationshipItem.toAsset)
+		if key not in edgesDict:
+			edgesDict[key] = { "id" : key, "from" : relationshipItem.fromAsset, "to" : relationshipItem.toAsset }
+			
+	nodes = [ x for x in nodesDict.values() ]
+	edges = [ x for x in edgesDict.values() ]
+	return { "nodes" : nodes, "edges" : edges }, 200
 
 @pluginPages.route("/relationship/")
 def getAssetRelationshipPage():
