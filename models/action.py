@@ -40,9 +40,9 @@ class _assetBulkUpdate(action._action):
 			lastSeen = None
 			for source in assetItem.lastSeen:
 				if source["source"] == updateSource:
+					lastSeen = source
 					if "lastUpdate" not in lastSeen:
 						lastSeen["lastUpdate"] = 0
-					lastSeen = source
 					break
 			if not lastSeen:
 				assetItem.lastSeen.append({ "source" : updateSource, "lastUpdate" : 0 })
@@ -186,9 +186,9 @@ class _assetUpdate(action._action):
 		lastSeen = None
 		for source in assetItem.lastSeen:
 			if source["source"] == updateSource:
+				lastSeen = source
 				if "lastUpdate" not in lastSeen:
 					lastSeen["lastUpdate"] = 0
-				lastSeen = source
 				break
 		if not lastSeen:
 			assetItem.lastSeen.append({ "source" : updateSource, "lastUpdate" : 0 })
