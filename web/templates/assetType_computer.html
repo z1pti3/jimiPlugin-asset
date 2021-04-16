@@ -1,0 +1,31 @@
+{% extends "jimiLayout6.html" %}
+
+{% block head %}
+    {{ jimi.charts() }}
+    {{ jimi.tables() }}
+    {{ jimi.visjs() }}
+{% endblock %}
+
+{% block block1 %}
+    {{ jimi.radar("1","Assets by Source","radarSources/") }}
+{% endblock %}
+
+{% block block2 %}
+    {{ jimi.doughnut("2","Assets by Entity","doughnutEntity/") }}
+{% endblock %}
+
+{% block block3 %}
+    {{ jimi.line("3","Assets Created by time","lineCreated/") }}
+{% endblock %}
+
+{% block block4 %}
+{{ jimi.line("3","Assets Created by time","lineCreated/") }}
+{% endblock %}
+
+{% block block5 %}
+{{ jimi.line("3","Assets Created by time","lineCreated/") }}
+{% endblock %}
+
+{% block block6 %}
+{{ jimi.line("3","Assets Created by time","lineCreated/") }}
+{% endblock %}

@@ -118,7 +118,7 @@ def table(action):
 	elif action == "poll":
 		start = int(jimi.api.request.args.get('start'))
 		data = pagedData.getOffset(start,queryMode=1)
-		table.setRows(data,links=[{ "field" : "name", "url" : "/plugin/asset/assetItem/", "fieldValue" : "_id" }])
+		table.setRows(data,links=[{ "field" : "name", "url" : "/plugin/asset/assetItem/", "fieldValue" : "_id" },{ "field" : "assetType", "url" : "/plugin/asset/assetType/", "fieldValue" : "assetType" }])
 		return table.generate(int(jimi.api.request.args.get('draw'))) ,200
 
 # Asset Item
@@ -147,7 +147,7 @@ def singleAssetTableFields(assetID,action):
 		for k,v in assetObject.fields.items():
 			data.append([ui.safe(k),ui.safe(v)])
 		table.data = data
-		return { "draw" : int(jimi.api.request.args.get('draw')), "recordsTable" : total, "recordsFiltered" : total, "recordsTotal" : total, "data" : data } ,200
+		return { "draw" : int(jimi.api.request.args.get('draw')), "recordsTable" : 0, "recordsFiltered" : 0, "recordsTotal" : 0, "data" : data } ,200
 
 
 @pluginPages.route("/assetItem/<assetID>/tableFieldsSources/<action>/")
@@ -164,7 +164,7 @@ def singleAssetTableFieldsSources(assetID,action):
 		for source in assetObject.lastSeen:
 			data.append([ui.safe(source["source"]),ui.dictTable(source)])
 		table.data = data
-		return { "draw" : int(jimi.api.request.args.get('draw')), "recordsTable" : total, "recordsFiltered" : total, "recordsTotal" : total, "data" : data } ,200
+		return { "draw" : int(jimi.api.request.args.get('draw')), "recordsTable" : 0, "recordsFiltered" : 0, "recordsTotal" : 0, "data" : data } ,200
 
 
 @pluginPages.route("/assetItem/<assetID>/networkRelationships/",methods=["GET"])
@@ -187,6 +187,16 @@ def singleAssetNetworkRelationships(assetID):
 	nodes = [ x for x in nodesDict.values() ]
 	edges = [ x for x in edgesDict.values() ]
 	return { "nodes" : nodes, "edges" : edges }, 200
+
+
+# Asset Type
+
+@pluginPages.route("/assetType/<assetType>/")
+def assetType(assetType):
+	if assetType == "computer":
+		return render_template("assetType_computer.html",CSRF=jimi.api.g.sessionData["CSRF"])
+	else:
+		return {}, 200
 
 # Old Stuff
 
