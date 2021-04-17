@@ -29,9 +29,11 @@ class _assetMatch(action._action):
 		for matchItem, matchValue in matches.items():
 			if type(matchValue) is list:
 				for matchValueItem in matchValue:
-					search["$or"].append( { matchItem : matchValueItem })
+					if matchValueItem != None:
+						search["$or"].append( { matchItem : matchValueItem })
 			else:
-				search["$or"].append( { matchItem : matchValue })
+				if matchValue != None:
+					search["$or"].append( { matchItem : matchValue })
 		
 		search["lastSeenTimestamp"] = { "$gt" : time.time() - lastSeenWithin }
 
