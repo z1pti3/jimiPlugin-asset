@@ -1,9 +1,46 @@
 import json
+import time
 
 from core.models import action, trigger
 from core import helpers, function, logging, cache, db
 from plugins.asset.models import asset
 
+import jimi
+
+class _assetMatch(action._action):
+	matches = dict()
+	lastSeenWithin = int()
+
+	def run(self,data,persistentData,actionResult):
+		matches = helpers.evalDict(self.matches,{ "data" : data })
+		lastSeenWithin = self.lastSeenWithin
+		if lastSeenWithin == 0:
+			lastSeenWithin = 86400
+
+		ors = {}
+		finds = {}
+		for matchItem, matchValue in matches.items():
+			if type(matchValue) is list:
+				ors[matchItem] = matchValue
+			else:
+				finds[matchItem] = matchValue
+		search = {}
+		search["$or"] = []
+		for matchItem, matchValue in matches.items():
+			if type(matchValue) is list:
+				for matchValueItem in matchValue:
+					search["$or"].append( { matchItem : matchValueItem })
+			else:
+				search["$or"].append( { matchItem : matchValue })
+		
+		search["lastSeenTimestamp"] = { "$gt" : time.time() - lastSeenWithin }
+
+		assetsList = asset._asset().query(query=search)["results"]
+
+		actionResult["assets"] = assetsList
+		actionResult["result"] = True
+		actionResult["rc"] = 0
+		return actionResult
 
 class _assetSearch(action._action):
 	search = dict()
