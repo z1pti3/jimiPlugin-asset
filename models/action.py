@@ -90,6 +90,9 @@ class _assetBulkUpdate(action._action):
 
 			# Working out priority and define fields
 			if assetChanged:
+				if self.auditHistory:
+					audit._audit().add("asset","history",{ "name" : assetItem.name, "entity" : assetItem.entity, "type" : assetItem.assetType, "fields" : assetItem.fields })
+					
 				foundValues = {}
 				now = time.time()
 				blacklist = ["lastUpdate","priority"]
@@ -237,6 +240,9 @@ class _assetUpdate(action._action):
 
 		# Working out priority and define fields
 		if assetChanged:
+			if self.auditHistory:
+				audit._audit().add("asset","history",{ "name" : assetItem.name, "entity" : assetItem.entity, "type" : assetItem.assetType, "fields" : assetItem.fields })
+
 			foundValues = {}
 			now = time.time()
 			blacklist = ["lastUpdate","priority"]
