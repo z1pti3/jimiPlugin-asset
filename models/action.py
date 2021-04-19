@@ -94,20 +94,25 @@ class _assetBulkUpdate(action._action):
 					audit._audit().add("asset","history",{ "name" : assetItem.name, "entity" : assetItem.entity, "type" : assetItem.assetType, "fields" : assetItem.fields })
 					
 				foundValues = {}
+				lastSeenTimestamp = 0
 				now = time.time()
 				blacklist = ["lastUpdate","priority"]
 				for sourceValue in assetItem.lastSeen:
+					if lastSeenTimestamp < sourceValue["lastUpdate"]:
+						lastSeenTimestamp = sourceValue["lastUpdate"]
 					for key, value in sourceValue.items():
-						if key not in blacklist:
-							if key not in foundValues:
-								foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
-							else:
-								if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + self.sourcePriorityMaxAge) > now:
+						if value:
+							if key not in blacklist:
+								if key not in foundValues:
 									foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
+								else:
+									if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + self.sourcePriorityMaxAge) > now:
+										foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
 				assetItem.fields = {}
 				for key, value in foundValues.items():
 					assetItem.fields[key] = value["value"]
-				assetItem.bulkUpdate(["lastSeen","fields"],self.bulkClass)
+				assetItem.lastSeenTimestamp = lastSeenTimestamp
+				assetItem.bulkUpdate(["lastSeenTimestamp","lastSeen","fields"],self.bulkClass)
 			
 			del assetData[assetItem.name]
 
@@ -244,21 +249,25 @@ class _assetUpdate(action._action):
 				audit._audit().add("asset","history",{ "name" : assetItem.name, "entity" : assetItem.entity, "type" : assetItem.assetType, "fields" : assetItem.fields })
 
 			foundValues = {}
+			lastSeenTimestamp = 0
 			now = time.time()
 			blacklist = ["lastUpdate","priority"]
-
 			for sourceValue in assetItem.lastSeen:
+				if lastSeenTimestamp < sourceValue["lastUpdate"]:
+					lastSeenTimestamp = sourceValue["lastUpdate"]
 				for key, value in sourceValue.items():
-					if key not in blacklist:
-						if key not in foundValues:
-							foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
-						else:
-							if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + self.sourcePriorityMaxAge) > now:
+					if value:
+						if key not in blacklist:
+							if key not in foundValues:
 								foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
+							else:
+								if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + self.sourcePriorityMaxAge) > now:
+									foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
 			assetItem.fields = {}
 			for key, value in foundValues.items():
 				assetItem.fields[key] = value["value"]
-			assetItem.bulkUpdate(["lastSeen","fields"],self.bulkClass)
+			assetItem.lastSeenTimestamp = lastSeenTimestamp
+			assetItem.bulkUpdate(["lastSeenTimestamp","lastSeen","fields"],self.bulkClass)
 			
 			actionResult["result"] = True
 			actionResult["msg"] = "Updated asset"
