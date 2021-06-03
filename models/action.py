@@ -16,6 +16,7 @@ class _assetBulkUpdate(action._action):
 	replaceExisting = bool()
 	delayedUpdate = int()
 	auditHistory = bool()
+	mergeSource = bool()
 
 	
 	def __init__(self):
@@ -83,7 +84,10 @@ class _assetBulkUpdate(action._action):
 					lastSeen = assetData[assetItem.name]
 				else:
 					for key, value in assetData[assetItem.name].items():
-						lastSeen[key] = value
+						if type(lastSeen[key]) == dict and type(value) == dict and self.mergeSource:
+							lastSeen[key] = {**lastSeen[key], **value}
+						else:
+							lastSeen[key] = value
 
 				lastSeen["priority"] = self.sourcePriority
 				lastSeen["lastUpdate"] = newTimestamp
@@ -136,6 +140,7 @@ class _assetUpdate(action._action):
 	replaceExisting = bool()
 	delayedUpdate = int()
 	auditHistory = bool()
+	mergeSource = bool()
 
 	def __init__(self):
 		cache.globalCache.newCache("assetCache")
@@ -238,7 +243,10 @@ class _assetUpdate(action._action):
 				lastSeen = assetFields
 			else:
 				for key, value in assetFields.items():
-					lastSeen[key] = value
+					if type(lastSeen[key]) == dict and type(value) == dict and self.mergeSource:
+						lastSeen[key] = {**lastSeen[key], **value}
+					else:
+						lastSeen[key] = value
 
 			lastSeen["priority"] = self.sourcePriority
 			lastSeen["lastUpdate"] = newTimestamp
