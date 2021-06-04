@@ -50,6 +50,8 @@ class _assetSearch(action._action):
 	flattenFields = list()
 	return_one = bool()
 	cache = bool()
+	order_by = str()
+	ascending = bool()
 
 	def __init__(self):
 		cache.globalCache.newCache("assetSearchCache")
@@ -57,17 +59,25 @@ class _assetSearch(action._action):
 	def run(self,data,persistentData,actionResult):
 		latestTime = 0
 		search = helpers.evalDict(self.search,{"data" : data})
+		order_by = helpers.evalString(self.order_by,{"data" : data})
 		match = ""
 		for key, value in search.items():
 			match += key
 			if type(value) == str:
 				match += value
 
+		sort = None
+		if order_by != "":
+			if self.ascending:
+				sort = [(order_by, 1)]
+			else:
+				sort = [(order_by, -1)]
+
 		if not self.cache:
 			# cache does not support nested dicts as these will always be seen as the same
-			assetList = cache.globalCache.get("assetSearchCache",match,getSearchObject,search,self.fields)
+			assetList = cache.globalCache.get("assetSearchCache",match,getSearchObject,search,self.fields,sort)
 		else:
-			assetList = asset._asset().query(query=search,fields=self.fields)["results"]
+			assetList = asset._asset().query(query=search,fields=self.fields,sort=sort)["results"]
 
 		if self.return_one:
 			actionResult["event"] = ""
@@ -94,7 +104,6 @@ class _assetSearch(action._action):
 			if attr == "search":
 				value = helpers.unicodeEscapeDict(value)
 		return super(_assetSearch, self).setAttribute(attr,value,sessionData=sessionData)
-
 
 class _assetSearchTrigger(trigger._trigger):
 	search = dict()
@@ -143,5 +152,5 @@ class _assetSearchTrigger(trigger._trigger):
 				value = helpers.unicodeEscapeDict(value)
 		return super(_assetSearchTrigger, self).setAttribute(attr,value,sessionData=sessionData)
 
-def getSearchObject(match,sessionData,search,fields):
-	return asset._asset().query(query=search,fields=fields)["results"]
+def getSearchObject(match,sessionData,search,fields,sort):
+	return asset._asset().query(query=search,fields=fields,sort=sort)["results"]
