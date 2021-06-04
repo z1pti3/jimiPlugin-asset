@@ -84,7 +84,7 @@ class _assetBulkUpdate(action._action):
 					lastSeen = assetData[assetItem.name]
 				else:
 					for key, value in assetData[assetItem.name].items():
-						if type(lastSeen[key]) == dict and type(value) == dict and self.mergeSource:
+						if key in lastSeen and (type(lastSeen[key]) == dict and type(value) == dict) and self.mergeSource:
 							lastSeen[key] = {**lastSeen[key], **value}
 						else:
 							lastSeen[key] = value
@@ -243,7 +243,7 @@ class _assetUpdate(action._action):
 				lastSeen = assetFields
 			else:
 				for key, value in assetFields.items():
-					if type(lastSeen[key]) == dict and type(value) == dict and self.mergeSource:
+					if key in lastSeen and (type(lastSeen[key]) == dict and type(value) == dict) and self.mergeSource:
 						lastSeen[key] = {**lastSeen[key], **value}
 					else:
 						lastSeen[key] = value
@@ -264,13 +264,16 @@ class _assetUpdate(action._action):
 				if lastSeenTimestamp < sourceValue["lastUpdate"]:
 					lastSeenTimestamp = sourceValue["lastUpdate"]
 				for key, value in sourceValue.items():
-					if value:
-						if key not in blacklist:
-							if key not in foundValues:
-								foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
-							else:
-								if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + self.sourcePriorityMaxAge) > now:
+					try:
+						if value:
+							if key not in blacklist:
+								if key not in foundValues:
 									foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
+								else:
+									if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + self.sourcePriorityMaxAge) > now:
+										foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
+					except:
+						print(assetItem.name,sourceValue,foundValues[key])
 			assetItem.fields = {}
 			for key, value in foundValues.items():
 				assetItem.fields[key] = value["value"]
