@@ -1,7 +1,7 @@
 {
    "name": "asset",
    "author": "z1p, b1scuit-thi3f",
-   "version": 0.7,
+   "version": 0.8,
    "categories": [],
    "description": "",
    "icon": null,
@@ -676,6 +676,125 @@
                "type": "input",
                "label": "eventField",
                "description": ""
+            }
+         ],
+         "data_out": {
+            "result": {
+               "description": "Returns True when successful.",
+               "type": "boolean",
+               "always_present": true,
+               "values": {
+                  "True": {
+                     "description": "Successful."
+                  },
+                  "False": {
+                     "description": "Failure."
+                  }
+               }
+            },
+            "rc": {
+               "description": "Returns the exit code for the action.",
+               "type": "number",
+               "always_present": true,
+               "values": {
+                  "0": {
+                     "description": "Successful."
+                  }
+               }
+            }
+         }
+      },
+      "assetRelationshipBulkUpdate": {
+         "display_name": "assetRelationshipBulkUpdate",
+         "className": "_assetRelationshipBulkUpdate",
+         "class_location": "models.relationship",
+         "description": "",
+         "fields": [
+            {
+               "schema_item": "relationshipData",
+               "schema_value": "relationshipData",
+               "type": "json-input",
+               "label": "relationshipData",
+               "description": ""
+            },
+            {
+               "schema_item": "fromAssetField",
+               "schema_value": "fromAssetField",
+               "type": "input",
+               "label": "fromAssetField",
+               "description": ""
+            },
+            {
+               "schema_item": "toAssetField",
+               "schema_value": "toAssetField",
+               "type": "input",
+               "label": "toAssetField",
+               "description": ""
+            },
+            {
+               "schema_item": "timespan",
+               "schema_value": "timespan",
+               "type": "input",
+               "label": "timespan",
+               "description": ""
+            },
+            {
+               "schema_item": "eventField",
+               "schema_value": "eventField",
+               "type": "input",
+               "label": "eventField",
+               "description": ""
+            }
+         ],
+         "data_out": {
+            "result": {
+               "description": "Returns True when successful.",
+               "type": "boolean",
+               "always_present": true,
+               "values": {
+                  "True": {
+                     "description": "Successful."
+                  },
+                  "False": {
+                     "description": "Failure."
+                  }
+               }
+            },
+            "rc": {
+               "description": "Returns the exit code for the action.",
+               "type": "number",
+               "always_present": true,
+               "values": {
+                  "0": {
+                     "description": "Successful."
+                  }
+               }
+            }
+         }
+      },
+      "assetProcess": {
+         "display_name": "assetProcess",
+         "className": "_assetProcess",
+         "class_location": "models.action",
+         "description": "Processes all asset sources to compute correlated fields",
+         "fields": [
+            {
+               "schema_item": "assetType",
+               "schema_value": "assetType",
+               "type": "input",
+               "label": "assetType",
+               "description": "",
+               "required" : true, 
+               "jimi_syntax" : true
+            },
+            {
+               "schema_item": "assetEntity",
+               "schema_value": "assetEntity",
+               "type": "input",
+               "label": "assetEntity",
+               "description": "",
+               "required" : true, 
+               "jimi_syntax" : true
             }
          ],
          "data_out": {

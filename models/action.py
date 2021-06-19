@@ -1,7 +1,11 @@
 import time
 
+from pymongo.message import update
+
 from core.models import action
 from core import db, helpers, function, logging, cache, audit
+
+import jimi
 
 from plugins.asset.models import asset	
 
@@ -122,7 +126,7 @@ class _assetBulkUpdate(action._action):
 
 		# Adding new
 		for assetName, assetFields in assetData.items():
-			assetItem = asset._asset().bulkNew(self.acl,assetName,assetEntity,assetType,updateSource,assetFields,updateTime,self.sourcePriority,self.bulkClass)	
+			assetItem = asset._asset().bulkNew(self.acl,assetName,assetEntity,assetType,updateSource,assetFields,updateTime,self.sourcePriority,self.sourcePriorityMaxAge,self.bulkClass)	
 			
 		actionResult["result"] = True
 		actionResult["rc"] = 0
@@ -143,11 +147,12 @@ class _assetUpdate(action._action):
 	mergeSource = bool()
 
 	def __init__(self):
-		cache.globalCache.newCache("assetCache")
 		self.bulkClass = db._bulk()
+		self.seen = []
 
 	def postRun(self):
 		self.bulkClass.bulkOperatonProcessing()
+		self.seen = []
 
 	def run(self,data,persistentData,actionResult):
 		assetName = helpers.evalString(self.assetName,{"data" : data})
@@ -165,10 +170,17 @@ class _assetUpdate(action._action):
 
 		match = "{0}-{1}-{2}".format(assetName,assetType,assetEntity)
 
-		assetItem = cache.globalCache.get("assetCache",match,getAssetObject,assetName,assetType,assetEntity)
+		if assetName in self.seen:
+			actionResult["result"] = False
+			actionResult["msg"] = "Asset already seen within this classes execution time"
+			actionResult["rc"] = 901
+			return actionResult
+
+		assetItem = asset._asset().getAsClass(query={ "name" : assetName, "assetType" : assetType, "entity" : assetEntity })
+		self.seen.append(assetName)
 		if not assetItem:
-			assetItem = asset._asset().bulkNew(self.acl,assetName,assetEntity,assetType,updateSource,assetFields,updateTime,self.sourcePriority,self.bulkClass)
-			cache.globalCache.insert("assetCache",match,[assetItem])
+			if assetName:
+				assetItem = asset._asset().bulkNew(self.acl,assetName,assetEntity,assetType,updateSource,assetFields,updateTime,self.sourcePriority,self.sourcePriorityMaxAge,self.bulkClass)
 			actionResult["result"] = True
 			actionResult["msg"] = "Created new asset"
 			actionResult["rc"] = 201
@@ -185,7 +197,6 @@ class _assetUpdate(action._action):
 					newestItem.delete()
 					newestItem = singleAssetItem
 			assetItem = newestItem
-			cache.globalCache.update("assetCache",match,[assetItem])
 			assetChanged = True
 		else:
 			assetItem = assetItem[0]
@@ -197,6 +208,7 @@ class _assetUpdate(action._action):
 			return actionResult
 
 		lastSeen = None
+		existingLastSeen = True
 		for source in assetItem.lastSeen:
 			if source["source"] == updateSource:
 				lastSeen = source
@@ -206,6 +218,7 @@ class _assetUpdate(action._action):
 		if not lastSeen:
 			assetItem.lastSeen.append({ "source" : updateSource, "lastUpdate" : 0 })
 			lastSeen = assetItem.lastSeen[-1]
+			existingLastSeen = False
 		
 		# Converting millsecond int epoch into epoch floats
 		currentTimestamp = lastSeen["lastUpdate"]
@@ -250,36 +263,13 @@ class _assetUpdate(action._action):
 
 			lastSeen["priority"] = self.sourcePriority
 			lastSeen["lastUpdate"] = newTimestamp
+			lastSeen["sourcePriorityMaxAge"] = self.sourcePriorityMaxAge
 
-		# Working out priority and define fields
 		if assetChanged:
-			if self.auditHistory:
-				audit._audit().add("asset","history",{ "name" : assetItem.name, "entity" : assetItem.entity, "type" : assetItem.assetType, "fields" : assetItem.fields })
-
-			foundValues = {}
-			lastSeenTimestamp = 0
-			now = time.time()
-			blacklist = ["lastUpdate","priority"]
-			for sourceValue in assetItem.lastSeen:
-				if lastSeenTimestamp < sourceValue["lastUpdate"]:
-					lastSeenTimestamp = sourceValue["lastUpdate"]
-				for key, value in sourceValue.items():
-					try:
-						if value:
-							if key not in blacklist:
-								if key not in foundValues:
-									foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
-								else:
-									if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + self.sourcePriorityMaxAge) > now:
-										foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
-					except:
-						print(assetItem.name,sourceValue,foundValues[key])
-			assetItem.fields = {}
-			for key, value in foundValues.items():
-				assetItem.fields[key] = value["value"]
-			assetItem.lastSeenTimestamp = lastSeenTimestamp
-			assetItem.bulkUpdate(["lastSeenTimestamp","lastSeen","fields"],self.bulkClass)
-			
+			if existingLastSeen:
+				self.bulkClass.newBulkOperaton(assetItem._dbCollection.name,"update",{ "query" : { "_id" : jimi.db.ObjectId(assetItem._id), "lastSeen.source" : updateSource }, "update" : { "$set" : { "lastSeen.$" : lastSeen } } })
+			else:
+				self.bulkClass.newBulkOperaton(assetItem._dbCollection.name,"update",{ "query" : { "_id" : jimi.db.ObjectId(assetItem._id) }, "update" : { "$push" : { "lastSeen" : lastSeen } } })
 			actionResult["result"] = True
 			actionResult["msg"] = "Updated asset"
 			actionResult["rc"] = 302
@@ -290,5 +280,57 @@ class _assetUpdate(action._action):
 		actionResult["rc"] = 304
 		return actionResult
 
-def getAssetObject(match,sessionData,assetName,assetType,assetEntity):
-	return asset._asset().getAsClass(query={ "name" : assetName, "assetType" : assetType, "entity" : assetEntity })
+
+class _assetProcess(action._action):
+	assetType = str()
+	assetEntity = str()
+
+	def __init__(self):
+		self.bulkClass = db._bulk()
+
+	def postRun(self):
+		self.bulkClass.bulkOperatonProcessing()
+
+	def run(self,data,persistentData,actionResult):
+		assetType = helpers.evalString(self.assetType,{"data" : data})
+		assetEntity = helpers.evalString(self.assetEntity,{"data" : data})
+
+		assetItems = asset._asset().getAsClass(query={ "assetType" : assetType, "entity" : assetEntity })
+		for assetItem in assetItems:
+			foundValues = {}
+			sourceList = []
+			lastSeenTimestamp = 0
+			now = time.time()
+			blacklist = ["lastUpdate","priority","source","sourcePriorityMaxAge"]
+			for sourceValue in assetItem.lastSeen:
+				if lastSeenTimestamp < sourceValue["lastUpdate"]:
+					lastSeenTimestamp = sourceValue["lastUpdate"]
+				for key, value in sourceValue.items():
+					if value:
+						if key not in blacklist:
+							if key not in foundValues:
+								foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
+							else:
+								if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + sourceValue["sourcePriorityMaxAge"]) > now:
+									foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
+			changes = False
+			for key, value in foundValues.items():
+				if assetItem.fields[key] != value["value"]:
+					changes = True
+					assetItem.fields[key] = value["value"]
+			popList = []
+			for field in assetItem.fields.keys():
+				if field not in foundValues:
+					changes = True
+					popList.append(field)
+			for popItem in popList:
+				del assetItem.fields[popItem]
+			if changes:
+				assetItem.lastSeenTimestamp = lastSeenTimestamp
+				assetItem.bulkUpdate(["lastSeenTimestamp","fields"],self.bulkClass)
+
+		actionResult["result"] = True
+		actionResult["msg"] = "Done"
+		actionResult["rc"] = 0
+		return actionResult
+		

@@ -1,7 +1,7 @@
 from core import plugin, model
 
 class _asset(plugin._plugin):
-    version = 0.7
+    version = 0.8
 
     def install(self):
         # Register models
@@ -14,6 +14,7 @@ class _asset(plugin._plugin):
         model.registerModel("assetRelationshipUpdate","_assetRelationshipUpdate","_action","plugins.asset.models.relationship")
         model.registerModel("assetRelationshipBulkUpdate","_assetRelationshipBulkUpdate","_action","plugins.asset.models.relationship")
         model.registerModel("assetMatch","_assetMatch","_action","plugins.asset.models.assetSearch")
+        model.registerModel("assetProcess","_assetProcess","_action","plugins.asset.models.action")
         return True
 
     def uninstall(self):
@@ -27,6 +28,7 @@ class _asset(plugin._plugin):
         model.deregisterModel("assetRelationshipUpdate","_assetRelationshipUpdate","_action","plugins.asset.models.relationship")
         model.deregisterModel("assetRelationshipBulkUpdate","_assetRelationshipBulkUpdate","_action","plugins.asset.models.relationship")
         model.deregisterModel("assetMatch","_assetMatch","_action","plugins.asset.models.assetSearch")
+        model.deregisterModel("assetProcess","_assetProcess","_action","plugins.asset.models.action")
         return True
     
     def upgrade(self,LatestPluginVersion):
@@ -43,4 +45,6 @@ class _asset(plugin._plugin):
             model.registerModel("assetSearch","_assetSearch","_action","plugins.asset.models.assetSearch")
         if self.version < 0.7:
             model.registerModel("assetMatch","_assetMatch","_action","plugins.asset.models.assetSearch")
+        if self.version < 0.8:
+            model.registerModel("assetProcess","_assetProcess","_action","plugins.asset.models.action")
         return True
