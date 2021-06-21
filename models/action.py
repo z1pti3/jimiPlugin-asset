@@ -315,8 +315,11 @@ class _assetProcess(action._action):
 									foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
 			changes = False
 			for key, value in foundValues.items():
-				if assetItem.fields[key] != value["value"]:
-					changes = True
+				if key in assetItem.fields:
+					if assetItem.fields[key] != value["value"]:
+						changes = True
+						assetItem.fields[key] = value["value"]
+				else:
 					assetItem.fields[key] = value["value"]
 			popList = []
 			for field in assetItem.fields.keys():
