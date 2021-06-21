@@ -9,15 +9,10 @@
         {{ jimi.tables() }}
         {{ jimi.visjs() }}
         {{ jimi.theme() }}
-        <style>
-            .fixNetworkHeight {
-                height: calc(100% - 25px);
-            }
-        </style>
     </head>
     <body class="overflow-auto">
         <div class="container-fluid h-100">
-            <div class="row g-0 justify-content-md-center min-vh-100">
+            <div class="row g-0 justify-content-md-center h-100">
                 <div class="col">
                     <div class="d-flex flex-column h-100">
                         <div class="row g-0 mt-2 justify-content-md-center">
@@ -38,7 +33,7 @@
                                 <h6>{{ assetSources|ui_safe }}</h6>
                             </div>
                         </div>
-                        <div class="row g-0 justify-content-md-center flex-grow-1 h-100">
+                        <div class="row g-0 justify-content-md-center h-100">
                             <div class="col col-sm-4">
                                 <div class="row g-0 justify-content-md-center h-50">
                                     <div class="col col-sm m-1 panel">
@@ -52,9 +47,7 @@
                                 </div>
                             </div>
                             <div class="col col-sm m-1 panel">
-                                <div class="row g-0 justify-content-md-center fixNetworkHeight">
-                                    {{ jimi.visjsnetwork("3","Relationships","networkRelationships/","true") }}
-                                </div>
+                                {{ jimi.visjsnetwork("3","Relationships","networkRelationships/","true") }}
                             </div>
                         </div>
                     </div>
