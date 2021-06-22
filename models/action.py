@@ -328,6 +328,8 @@ class _assetProcess(action._action):
 					popList.append(field)
 			for popItem in popList:
 				del assetItem.fields[popItem]
+			if assetItem.lastSeenTimestamp < lastSeenTimestamp:
+				changes = True
 			if changes:
 				assetItem.lastSeenTimestamp = lastSeenTimestamp
 				assetItem.bulkUpdate(["lastSeenTimestamp","fields"],self.bulkClass)
