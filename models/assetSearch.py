@@ -72,6 +72,9 @@ class _assetSearch(action._action):
 				sort = [(order_by, 1)]
 			else:
 				sort = [(order_by, -1)]
+				
+		if "_id" in search:
+			search["_id"] = jimi.db.ObjectId(search["_id"])
 
 		if not self.cache:
 			# cache does not support nested dicts as these will always be seen as the same
@@ -123,6 +126,9 @@ class _assetSearchTrigger(trigger._trigger):
 			match += key
 			if type(value) == str:
 				match += value
+				
+		if "_id" in search:
+			search["_id"] = jimi.db.ObjectId(search["_id"])
 
 		if not self.cache:
 			# cache does not support nested dicts as these will always be seen as the same
