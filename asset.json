@@ -1,6 +1,6 @@
 {
    "name": "asset",
-   "author": "z1p, b1scuit-thi3f",
+   "author": "z1p, b1scuit-thi3f","superstap",
    "version": 0.82,
    "categories": [],
    "description": "",
@@ -90,7 +90,7 @@
          "display_name": "assetRelationship",
          "className": "_assetRelationship",
          "class_location": "models.relationship",
-         "description": "",
+         "description": "Builds relationships between assets, for example:an asset being identified by multiple sources and combines the collected information into the asset database",
          "fields": [
             {
                "schema_item": "timespan",
@@ -153,7 +153,7 @@
          "display_name": "assetSearchTrigger",
          "className": "_assetSearchTrigger",
          "class_location": "models.assetSearch",
-         "description": "",
+         "description": "Once triggered, depending on the given parameters, it will identify new and existing assets and update the asset database.",
          "fields": [
             {
                "schema_item": "search",
@@ -223,7 +223,7 @@
          "display_name": "assetBulkUpdate",
          "className": "_assetBulkUpdate",
          "class_location": "models.action",
-         "description": "",
+         "description": "Action which builds and updates assets on bulk",
          "fields": [
             {
                "schema_item": "assetType",
@@ -333,7 +333,7 @@
          "display_name": "assetUpdate",
          "className": "_assetUpdate",
          "class_location": "models.action",
-         "description": "",
+         "description": "Action which builds and updates assets",
          "fields": [
             {
                "schema_item": "assetName",
@@ -450,7 +450,7 @@
          "display_name": "assetMatch",
          "className": "_assetMatch",
          "class_location": "models.assetSearch",
-         "description": "",
+         "description": "Matches an asset based on a given pattern that is similar for example IP-address 1.1.1, in which can result to multiple assets: 1.1.1.1 and 1.1.1.2",
          "fields": [
             {
                "schema_item": "matches",
@@ -497,7 +497,7 @@
          "display_name": "assetSearch",
          "className": "_assetSearch",
          "class_location": "models.assetSearch",
-         "description": "",
+         "description": "Enables searching for assets identified and stored within the database",
          "fields": [
             {
                "schema_item": "search",
@@ -579,7 +579,7 @@
          "display_name": "assetRelationshipUpdate",
          "className": "_assetRelationshipUpdate",
          "class_location": "models.relationship",
-         "description": "",
+         "description": "Updates the relationship of an Asset corelating different information for an asset",
          "fields": [
             {
                "schema_item": "relationshipData",
@@ -640,7 +640,7 @@
          "display_name": "assetRelationshipBulkUpdate",
          "className": "_assetRelationshipBulkUpdate",
          "class_location": "models.relationship",
-         "description": "",
+         "description": "Updates the relationship of an Asset corelating different information for assets on bulk",
          "fields": [
             {
                "schema_item": "relationshipData",
