@@ -91,8 +91,9 @@ class _assetSearch(action._action):
 							assetItem[flattenField] = assetItem["fields"][flattenField]
 							del assetItem["fields"][flattenField]
 				if self.return_one:
-					if assetItem["lastUpdateTime"] > latestTime:
+					if "lastUpdateTime" in assetItem and assetItem["lastUpdateTime"] > latestTime:
 						actionResult["event"] = assetItem
+						latestTime = assetItem["lastUpdateTime"]
 				else:
 					actionResult["events"].append(assetItem)
 		actionResult["result"] = True
