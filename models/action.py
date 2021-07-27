@@ -230,7 +230,7 @@ class _assetUpdate(action._action):
 		newTimestamp = None
 		if updateTime:
 			try:
-				if updateTime < currentTimestamp:
+				if updateTime < currentTimestamp and updateTime > 0:
 					newTimestamp = False
 				else:
 					newTimestamp = updateTime
