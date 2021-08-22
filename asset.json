@@ -593,21 +593,27 @@
                "schema_value": "fromAsset",
                "type": "input",
                "label": "fromAsset",
-               "description": ""
+               "description": "Define the variable value in which the relationship has began from, eg. source IP-address",
+               "required": true,
+               "jimi_syntax": true
             },
             {
                "schema_item": "toAsset",
                "schema_value": "toAsset",
                "type": "input",
                "label": "toAsset",
-               "description": ""
+               "description": "Define the variable value in which the relationship has ended to, eg. destination IP-address",
+               "required": true,
+               "jimi_syntax": true
             },
             {
                "schema_item": "timespan",
                "schema_value": "timespan",
                "type": "input",
                "label": "timespan",
-               "description": ""
+               "description": "Time duration in which the relationship will be based upon. In other words a 'bucket' of time",
+               "required": true,
+               "jimi_syntax": false
             }
          ],
          "data_out": {
