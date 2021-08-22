@@ -133,7 +133,7 @@ class _assetSearchTrigger(trigger._trigger):
 
 		if not self.cache:
 			# cache does not support nested dicts as these will always be seen as the same
-			assetList = cache.globalCache.get("assetSearchCache",match,getSearchObject,search,self.fields)
+			assetList = cache.globalCache.get("assetSearchCache",match,getSearchObject,search,self.fields,None)
 		else:
 			assetList = asset._asset().query(query=search,fields=self.fields)["results"]
 			
@@ -149,9 +149,9 @@ class _assetSearchTrigger(trigger._trigger):
 						if self.result["event"]["lastUpdateTime"] > latestTime:
 							self.result["event"] = assetItem
 					else:
-						self.result["event"] = asset
+						self.result["event"] = assetItem
 				else:
-					self.result["events"].append(asset)
+					self.result["events"].append(assetItem)
 
 	def setAttribute(self,attr,value,sessionData=None):
 		if not sessionData or db.fieldACLAccess(sessionData,self.acl,attr,accessType="write"):
