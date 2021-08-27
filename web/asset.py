@@ -104,9 +104,9 @@ def table(action):
 	searchValue = jimi.api.request.args.get('search[value]')
 	if searchValue:
 		searchFilter = { "$or" : [ 
-			{ "name" : { "$regex" : ".*{0}.*".format(searchValue) } },
-			{ "entity" : { "$regex" : ".*{0}.*".format(searchValue) } },
-			{ "assetType" : { "$regex" : ".*{0}.*".format(searchValue) } },
+			{ "name" : { "$regex" : ".*{0}.*".format(searchValue), "$options":"i" } },
+			{ "entity" : { "$regex" : ".*{0}.*".format(searchValue), "$options":"i" } },
+			{ "assetType" : { "$regex" : ".*{0}.*".format(searchValue), "$options":"i" } },
 			{ "fields.ip" : { "$regex" : ".*{0}.*".format(searchValue) } }
 		] }
 	else:
@@ -118,7 +118,7 @@ def table(action):
 	elif action == "poll":
 		start = int(jimi.api.request.args.get('start'))
 		data = pagedData.getOffset(start,queryMode=1)
-		table.setRows(data,links=[{ "field" : "name", "url" : "/plugin/asset/assetItem/", "fieldValue" : "_id" },{ "field" : "assetType", "url" : "/plugin/asset/assetType/", "fieldValue" : "assetType" }])
+		table.setRows(data,links=[{ "field" : "name", "url" : "/plugin/asset/assetItem/", "fieldValue" : "_id" },{ "field" : "assetType", "url" : "/plugin/asset/assetType/", "fieldValue" : "assetType" },{ "field" : "assetType", "url" : "/plugin/asset/assetItem/", "fieldValue" : "assetType" }])
 		return table.generate(int(jimi.api.request.args.get('draw'))) ,200
 
 # Asset Item
