@@ -229,8 +229,8 @@ def getAsset(cacheUID,sessionData,name,assetType,entity,bulkUpdate):
 	if bulkUpdate:
 		assetCacheBulk = cache.globalCache.get("assetCacheBulk",f"assetBulk-{assetType}-{entity}",getAssetBulk,assetType,entity,customCacheTime=300)
 		try:
-			return [assetCacheBulk["{0}-{1}-{2}".format(name,assetType,entity)]]
-		except TypeError:
+			return [assetCacheBulk[cacheUID]]
+		except KeyError:
 			return None
 	else:
 		results = asset._asset().getAsClass(query={ "name" : name, "assetType" : assetType, "entity" : entity})
