@@ -106,7 +106,7 @@ class _assetRelationshipBulkUpdate(action._action):
         return actionResult
 
 def getClassByName(match,sessionData):
-    return model._model().query(query={"className" : match})["results"]
+    return model._model(False).query(query={"className" : match})["results"]
 
 def getAssetRelationshipObject(match,sessionData,timespan,fromAsset,toAsset):
     try:

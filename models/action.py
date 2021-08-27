@@ -24,7 +24,6 @@ class _assetBulkUpdate(action._action):
 
 	
 	def __init__(self):
-		cache.globalCache.newCache("assetCache")
 		self.bulkClass = db._bulk()
 
 	def postRun(self):
@@ -176,7 +175,9 @@ class _assetUpdate(action._action):
 			actionResult["rc"] = 901
 			return actionResult
 
-		assetItem = asset._asset().getAsClass(query={ "name" : assetName, "assetType" : assetType, "entity" : assetEntity })
+		assetItem = cache.globalCache.get("assetCache",match,getAsset,assetName,assetType,assetEntity,extendCacheTime=True,customCacheTime=300)
+		if assetItem is None:
+			assetItem = []
 		self.seen.append(assetName)
 		if not assetItem:
 			if assetName:
@@ -196,7 +197,7 @@ class _assetUpdate(action._action):
 				else:
 					newestItem.delete()
 					newestItem = singleAssetItem
-			assetItem = newestItem
+			assetItem = cache.globalCache.get("assetCache",match,getAsset,assetName,assetType,assetEntity,customCacheTime=300,forceUpdate=True)
 			assetChanged = True
 		else:
 			assetItem = assetItem[0]
@@ -339,3 +340,8 @@ class _assetProcess(action._action):
 		actionResult["rc"] = 0
 		return actionResult
 		
+def getAsset(cacheUID,sessionData,name,assetType,entity):
+    results = asset._asset().getAsClass(query={ "name" : name, "assetType" : assetType, "entity" : entity})
+    if len(results) > 0:
+        return results
+    return None
