@@ -9,128 +9,6 @@ import jimi
 
 from plugins.asset.models import asset	
 
-class _assetBulkUpdate(action._action):
-	assetType = str()
-	assetEntity = str()
-	updateTime = str()
-	updateSource = str()
-	sourcePriority = int()
-	sourcePriorityMaxAge = 86400
-	assetData = dict()
-	replaceExisting = bool()
-	delayedUpdate = int()
-	auditHistory = bool()
-	mergeSource = bool()
-
-	
-	def __init__(self):
-		self.bulkClass = db._bulk()
-
-	def postRun(self):
-		self.bulkClass.bulkOperatonProcessing()
-
-	def run(self,data,persistentData,actionResult):
-		assetType = helpers.evalString(self.assetType,{"data" : data})
-		assetEntity = helpers.evalString(self.assetEntity,{"data" : data})
-		updateSource = helpers.evalString(self.updateSource,{"data" : data})
-		updateTime = helpers.evalString(self.updateTime,{"data" : data})
-		assetData = helpers.evalDict(self.assetData,{"data" : data})
-
-		existingAssets = asset._asset().getAsClass(query={ "name" : { "$in" : list(assetData.keys()) }, "assetType" : assetType, "entity" : assetEntity })
-
-		# Updating existing
-		for assetItem in existingAssets:
-
-			lastSeen = None
-			for source in assetItem.lastSeen:
-				if source["source"] == updateSource:
-					lastSeen = source
-					if "lastUpdate" not in lastSeen:
-						lastSeen["lastUpdate"] = 0
-					break
-			if not lastSeen:
-				assetItem.lastSeen.append({ "source" : updateSource, "lastUpdate" : 0 })
-				lastSeen = assetItem.lastSeen[-1]
-
-			# Converting millsecond int epoch into epoch floats
-			currentTimestamp = lastSeen["lastUpdate"]
-			if len(str(currentTimestamp).split(".")[0]) == 13:
-				currentTimestamp = currentTimestamp / 1000
-			updateTime = assetData[assetItem.name]["lastUpdate"]
-			if len(str(updateTime).split(".")[0]) == 13:
-				updateTime = updateTime / 1000
-
-			newTimestamp = None
-			if updateTime:
-				try:
-					if updateTime < currentTimestamp:
-						newTimestamp = False
-					else:
-						newTimestamp = updateTime
-				except (KeyError, ValueError):
-					pass
-			if newTimestamp == None:
-				newTimestamp = time.time()
-
-			assetChanged = False
-			if newTimestamp != False:
-				try:
-					if (time.time() - currentTimestamp) < self.delayedUpdate:
-						continue
-				except KeyError:
-					pass
-				assetChanged = True
-				if newTimestamp > assetItem.lastSeenTimestamp:
-					assetItem.lastSeenTimestamp = newTimestamp
-
-				if self.replaceExisting:
-					lastSeen = assetData[assetItem.name]
-				else:
-					for key, value in assetData[assetItem.name].items():
-						if key in lastSeen and (type(lastSeen[key]) == dict and type(value) == dict) and self.mergeSource:
-							lastSeen[key] = {**lastSeen[key], **value}
-						else:
-							lastSeen[key] = value
-
-				lastSeen["priority"] = self.sourcePriority
-				lastSeen["lastUpdate"] = newTimestamp
-
-			# Working out priority and define fields
-			if assetChanged:
-				if self.auditHistory:
-					audit._audit().add("asset","history",{ "name" : assetItem.name, "entity" : assetItem.entity, "type" : assetItem.assetType, "fields" : assetItem.fields })
-					
-				foundValues = {}
-				lastSeenTimestamp = 0
-				now = time.time()
-				blacklist = ["lastUpdate","priority"]
-				for sourceValue in assetItem.lastSeen:
-					if lastSeenTimestamp < sourceValue["lastUpdate"]:
-						lastSeenTimestamp = sourceValue["lastUpdate"]
-					for key, value in sourceValue.items():
-						if value:
-							if key not in blacklist:
-								if key not in foundValues:
-									foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
-								else:
-									if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + self.sourcePriorityMaxAge) > now:
-										foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
-				assetItem.fields = {}
-				for key, value in foundValues.items():
-					assetItem.fields[key] = value["value"]
-				assetItem.lastSeenTimestamp = lastSeenTimestamp
-				assetItem.bulkUpdate(["lastSeenTimestamp","lastSeen","fields"],self.bulkClass)
-			
-			del assetData[assetItem.name]
-
-		# Adding new
-		for assetName, assetFields in assetData.items():
-			assetItem = asset._asset().bulkNew(self.acl,assetName,assetEntity,assetType,updateSource,assetFields,updateTime,self.sourcePriority,self.sourcePriorityMaxAge,self.bulkClass)	
-			
-		actionResult["result"] = True
-		actionResult["rc"] = 0
-		return actionResult
-
 class _assetUpdate(action._action):
 	assetName = str()
 	assetType = str()
@@ -144,6 +22,7 @@ class _assetUpdate(action._action):
 	delayedUpdate = int()
 	auditHistory = bool()
 	mergeSource = bool()
+	bulkUpdate = bool()
 
 	def __init__(self):
 		self.bulkClass = db._bulk()
@@ -175,7 +54,7 @@ class _assetUpdate(action._action):
 			actionResult["rc"] = 901
 			return actionResult
 
-		assetItem = cache.globalCache.get("assetCache",match,getAsset,assetName,assetType,assetEntity,extendCacheTime=True,customCacheTime=300)
+		assetItem = cache.globalCache.get("assetCache",match,getAsset,assetName,assetType,assetEntity,self.bulkUpdate,extendCacheTime=True,customCacheTime=300)
 		if assetItem is None:
 			assetItem = []
 		self.seen.append(assetName)
@@ -281,7 +160,6 @@ class _assetUpdate(action._action):
 		actionResult["rc"] = 304
 		return actionResult
 
-
 class _assetProcess(action._action):
 	assetType = str()
 	assetEntity = str()
@@ -340,8 +218,22 @@ class _assetProcess(action._action):
 		actionResult["rc"] = 0
 		return actionResult
 		
-def getAsset(cacheUID,sessionData,name,assetType,entity):
-    results = asset._asset().getAsClass(query={ "name" : name, "assetType" : assetType, "entity" : entity})
-    if len(results) > 0:
-        return results
-    return None
+def getAssetBulk(cacheUID,sessionData,assetType,entity):
+	results = asset._asset().getAsClass(query={"assetType" : assetType, "entity" : entity})
+	resultDict = {}
+	for result in results:
+		resultDict["{0}-{1}-{2}".format(result.name,assetType,entity)] = result
+	return resultDict
+
+def getAsset(cacheUID,sessionData,name,assetType,entity,bulkUpdate):
+	if bulkUpdate:
+		assetCacheBulk = cache.globalCache.get("assetCacheBulk",f"assetBulk-{assetType}-{entity}",getAssetBulk,assetType,entity,customCacheTime=300)
+		try:
+			return [assetCacheBulk["{0}-{1}-{2}".format(name,assetType,entity)]]
+		except TypeError:
+			return None
+	else:
+		results = asset._asset().getAsClass(query={ "name" : name, "assetType" : assetType, "entity" : entity})
+		if len(results) > 0:
+			return results
+	return None

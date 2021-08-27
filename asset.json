@@ -1,7 +1,7 @@
 {
    "name": "asset",
    "author": "z1p, b1scuit-thi3f. superstap",
-   "version": 0.83,
+   "version": 1.0,
    "categories": [],
    "description": "",
    "icon": null,
@@ -219,116 +219,6 @@
       }
    },
    "actions": {
-      "assetBulkUpdate": {
-         "display_name": "assetBulkUpdate",
-         "className": "_assetBulkUpdate",
-         "class_location": "models.action",
-         "description": "Action which builds and updates assets on bulk",
-         "fields": [
-            {
-               "schema_item": "assetType",
-               "schema_value": "assetType",
-               "type": "input",
-               "label": "assetType",
-               "description": ""
-            },
-            {
-               "schema_item": "assetEntity",
-               "schema_value": "assetEntity",
-               "type": "input",
-               "label": "assetEntity",
-               "description": ""
-            },
-            {
-               "schema_item": "updateTime",
-               "schema_value": "updateTime",
-               "type": "input",
-               "label": "updateTime",
-               "description": ""
-            },
-            {
-               "schema_item": "updateSource",
-               "schema_value": "updateSource",
-               "type": "input",
-               "label": "updateSource",
-               "description": ""
-            },
-            {
-               "schema_item": "sourcePriority",
-               "schema_value": "sourcePriority",
-               "type": "input",
-               "label": "sourcePriority",
-               "description": ""
-            },
-            {
-               "schema_item": "sourcePriorityMaxAge",
-               "schema_value": "sourcePriorityMaxAge",
-               "type": "input",
-               "label": "sourcePriorityMaxAge",
-               "description": ""
-            },
-            {
-               "schema_item": "assetData",
-               "schema_value": "assetData",
-               "type": "json-input",
-               "label": "assetData",
-               "description": ""
-            },
-            {
-               "schema_item": "replaceExisting",
-               "schema_value": "replaceExisting",
-               "type": "checkbox",
-               "label": "replaceExisting",
-               "description": ""
-            },
-            {
-               "schema_item": "delayedUpdate",
-               "schema_value": "delayedUpdate",
-               "type": "input",
-               "label": "delayedUpdate",
-               "description": ""
-            },
-            {
-               "schema_item": "auditHistory",
-               "schema_value": "auditHistory",
-               "type": "checkbox",
-               "label": "auditHistory",
-               "description": ""
-            },
-            {
-               "schema_item": "mergeSource",
-               "schema_value": "mergeSource",
-               "type": "checkbox",
-               "label": "mergeSource",
-               "description": ""
-            }
-         ],
-         "data_out": {
-            "result": {
-               "description": "Returns True when successful.",
-               "type": "boolean",
-               "always_present": true,
-               "values": {
-                  "True": {
-                     "description": "Successful."
-                  },
-                  "False": {
-                     "description": "Failure."
-                  }
-               }
-            },
-            "rc": {
-               "description": "Returns the exit code for the action.",
-               "type": "number",
-               "always_present": true,
-               "values": {
-                  "0": {
-                     "description": "Successful."
-                  }
-               }
-            }
-         }
-      },
       "assetUpdate": {
          "display_name": "assetUpdate",
          "className": "_assetUpdate",
@@ -418,6 +308,13 @@
                "type": "checkbox",
                "label": "mergeSource",
                "description": ""
+            },
+            {
+               "schema_item": "bulkUpdate",
+               "schema_value": "bulkUpdate",
+               "type": "checkbox",
+               "label": "bulkUpdate",
+               "description": "Use a bulk cache rather than single object cache"
             }
          ],
          "data_out": {
@@ -647,74 +544,6 @@
          "className": "_assetRelationshipBulkUpdate",
          "class_location": "models.relationship",
          "description": "Updates the relationship of an Asset corelating different information for assets on bulk",
-         "fields": [
-            {
-               "schema_item": "relationshipData",
-               "schema_value": "relationshipData",
-               "type": "json-input",
-               "label": "relationshipData",
-               "description": ""
-            },
-            {
-               "schema_item": "fromAssetField",
-               "schema_value": "fromAssetField",
-               "type": "input",
-               "label": "fromAssetField",
-               "description": ""
-            },
-            {
-               "schema_item": "toAssetField",
-               "schema_value": "toAssetField",
-               "type": "input",
-               "label": "toAssetField",
-               "description": ""
-            },
-            {
-               "schema_item": "timespan",
-               "schema_value": "timespan",
-               "type": "input",
-               "label": "timespan",
-               "description": ""
-            },
-            {
-               "schema_item": "eventField",
-               "schema_value": "eventField",
-               "type": "input",
-               "label": "eventField",
-               "description": ""
-            }
-         ],
-         "data_out": {
-            "result": {
-               "description": "Returns True when successful.",
-               "type": "boolean",
-               "always_present": true,
-               "values": {
-                  "True": {
-                     "description": "Successful."
-                  },
-                  "False": {
-                     "description": "Failure."
-                  }
-               }
-            },
-            "rc": {
-               "description": "Returns the exit code for the action.",
-               "type": "number",
-               "always_present": true,
-               "values": {
-                  "0": {
-                     "description": "Successful."
-                  }
-               }
-            }
-         }
-      },
-      "assetRelationshipBulkUpdate": {
-         "display_name": "assetRelationshipBulkUpdate",
-         "className": "_assetRelationshipBulkUpdate",
-         "class_location": "models.relationship",
-         "description": "",
          "fields": [
             {
                "schema_item": "relationshipData",
