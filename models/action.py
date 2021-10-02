@@ -54,7 +54,7 @@ class _assetUpdate(action._action):
 			actionResult["rc"] = 901
 			return actionResult
 
-		assetItem = cache.globalCache.get("assetCache",match,getAsset,assetName,assetType,assetEntity,self.bulkUpdate,extendCacheTime=True,customCacheTime=300)
+		assetItem = cache.globalCache.get("assetCache",match,getAsset,assetName,assetType,assetEntity,self.bulkUpdate,customCacheTime=300)
 		if assetItem is None:
 			assetItem = []
 		self.seen.append(assetName)
