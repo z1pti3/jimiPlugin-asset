@@ -76,7 +76,8 @@ class _assetUpdate(action._action):
 				else:
 					newestItem.delete()
 					newestItem = singleAssetItem
-			assetItem = cache.globalCache.get("assetCache",match,getAsset,assetName,assetType,assetEntity,self.bulkUpdate,customCacheTime=300,forceUpdate=True)[0]
+			cache.globalCache.get("assetCache",match,getAsset,assetName,assetType,assetEntity,self.bulkUpdate,customCacheTime=300,forceUpdate=True)
+			assetItem = newestItem
 			assetChanged = True
 		else:
 			assetItem = assetItem[0]
