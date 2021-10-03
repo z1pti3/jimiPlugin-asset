@@ -76,7 +76,7 @@ class _assetUpdate(action._action):
 				else:
 					newestItem.delete()
 					newestItem = singleAssetItem
-			assetItem = cache.globalCache.get("assetCache",match,getAsset,assetName,assetType,assetEntity,customCacheTime=300,forceUpdate=True)
+			assetItem = cache.globalCache.get("assetCache",match,getAsset,assetName,assetType,assetEntity,self.bulkUpdate,customCacheTime=300,forceUpdate=True)
 			assetChanged = True
 		else:
 			assetItem = assetItem[0]
@@ -222,14 +222,17 @@ def getAssetBulk(cacheUID,sessionData,assetType,entity):
 	results = asset._asset().getAsClass(query={"assetType" : assetType, "entity" : entity})
 	resultDict = {}
 	for result in results:
-		resultDict["{0}-{1}-{2}".format(result.name,assetType,entity)] = result
+		try:
+			resultDict["{0}-{1}-{2}".format(result.name,assetType,entity)].append(result)
+		except:
+			resultDict["{0}-{1}-{2}".format(result.name,assetType,entity)] = [result]
 	return resultDict
 
 def getAsset(cacheUID,sessionData,name,assetType,entity,bulkUpdate):
 	if bulkUpdate:
 		assetCacheBulk = cache.globalCache.get("assetCacheBulk",f"assetBulk-{assetType}-{entity}",getAssetBulk,assetType,entity,customCacheTime=300)
 		try:
-			return [assetCacheBulk[cacheUID]]
+			return assetCacheBulk[cacheUID]
 		except KeyError:
 			return None
 	else:
