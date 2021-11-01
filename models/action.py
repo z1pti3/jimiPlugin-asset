@@ -188,7 +188,7 @@ class _assetProcess(action._action):
 				for key, value in sourceValue.items():
 					if value:
 						if key not in blacklist:
-							if key not in foundValues:
+							if key not in foundValues and (sourceValue["lastUpdate"] + sourceValue["sourcePriorityMaxAge"]) > now:
 								foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
 							else:
 								if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + sourceValue["sourcePriorityMaxAge"]) > now:
