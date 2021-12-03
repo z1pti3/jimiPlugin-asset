@@ -142,6 +142,7 @@ class _assetUpdate(action._action):
 					else:
 						lastSeen[key] = value
 
+			lastSeen["source"] = updateSource			
 			lastSeen["priority"] = self.sourcePriority
 			lastSeen["lastUpdate"] = newTimestamp
 			lastSeen["sourcePriorityMaxAge"] = self.sourcePriorityMaxAge
