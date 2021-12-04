@@ -103,12 +103,16 @@ def table(action):
 	fields = [ "name", "entity", "assetType" ]
 	searchValue = jimi.api.request.args.get('search[value]')
 	if searchValue:
-		searchFilter = { "$or" : [ 
-			{ "name" : { "$regex" : ".*{0}.*".format(searchValue), "$options":"i" } },
-			{ "entity" : { "$regex" : ".*{0}.*".format(searchValue), "$options":"i" } },
-			{ "assetType" : { "$regex" : ".*{0}.*".format(searchValue), "$options":"i" } },
-			{ "fields.ip" : { "$regex" : ".*{0}.*".format(searchValue) } }
-		] }
+		searchValue = jimi.helpers.typeCast(searchValue)
+		if type(searchValue) is dict:
+			searchFilter = searchValue
+		else:
+			searchFilter = { "$or" : [ 
+				{ "name" : { "$regex" : ".*{0}.*".format(searchValue), "$options":"i" } },
+				{ "entity" : { "$regex" : ".*{0}.*".format(searchValue), "$options":"i" } },
+				{ "assetType" : { "$regex" : ".*{0}.*".format(searchValue), "$options":"i" } },
+				{ "fields.ip" : { "$regex" : ".*{0}.*".format(searchValue) } }
+			] }
 	else:
 		searchFilter = {}
 	pagedData = jimi.db._paged(asset._asset,sessionData=api.g.sessionData,fields=fields,query=searchFilter,maxResults=200)
