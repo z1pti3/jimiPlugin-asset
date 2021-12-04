@@ -1,7 +1,5 @@
 import time
 
-from pymongo.message import update
-
 from core.models import action
 from core import db, helpers, function, logging, cache, audit
 
