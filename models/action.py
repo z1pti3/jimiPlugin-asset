@@ -20,7 +20,7 @@ class _assetUpdate(action._action):
 	delayedUpdate = int()
 	auditHistory = bool()
 	mergeSource = bool()
-	bulkUpdate = bool()
+	bulkUpdate = True
 
 	def __init__(self):
 		self.bulkClass = db._bulk()
