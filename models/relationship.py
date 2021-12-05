@@ -38,7 +38,7 @@ class _assetRelationshipUpdate(action._action):
 
     def __init__(self,restrictClass=True):
         self.bulkClass = db._bulk()
-        cache.globalCache.newCache("assetRelationshipCache")]
+        cache.globalCache.newCache("assetRelationshipCache")
         return super(_assetRelationshipUpdate, self).__init__(restrictClass)
 
     def postRun(self):
