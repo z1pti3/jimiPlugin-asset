@@ -22,9 +22,10 @@ class _assetUpdate(action._action):
 	mergeSource = bool()
 	bulkUpdate = True
 
-	def __init__(self):
+	def __init__(self,restrictClass=True):
 		self.bulkClass = db._bulk()
 		self.seen = []
+		return super(_assetUpdate, self).__init__(restrictClass)
 
 	def postRun(self):
 		self.bulkClass.bulkOperatonProcessing()
@@ -164,8 +165,9 @@ class _assetProcess(action._action):
 	assetType = str()
 	assetEntity = str()
 
-	def __init__(self):
+	def __init__(self,restrictClass=True):
 		self.bulkClass = db._bulk()
+		return super(_assetProcess, self).__init__(restrictClass)
 
 	def postRun(self):
 		self.bulkClass.bulkOperatonProcessing()

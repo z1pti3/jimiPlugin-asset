@@ -53,8 +53,9 @@ class _assetSearch(action._action):
 	order_by = str()
 	ascending = bool()
 
-	def __init__(self):
+	def __init__(self,restrictClass=True):
 		cache.globalCache.newCache("assetSearchCache")
+		return super(_assetSearch, self).__init__(restrictClass)
 
 	def run(self,data,persistentData,actionResult):
 		latestTime = 0
@@ -116,8 +117,9 @@ class _assetSearchTrigger(trigger._trigger):
 	return_one = bool()
 	cache = bool()
 
-	def __init__(self):
+	def __init__(self,restrictClass=True):
 		cache.globalCache.newCache("assetSearchCache")
+		return super(_assetSearchTrigger, self).__init__(restrictClass)
 
 	def check(self):
 		latestTime = 0

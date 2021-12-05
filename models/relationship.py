@@ -36,9 +36,10 @@ class _assetRelationshipUpdate(action._action):
     toAsset = str()
     timespan = int()
 
-    def __init__(self):
+    def __init__(self,restrictClass=True):
         self.bulkClass = db._bulk()
-        cache.globalCache.newCache("assetRelationshipCache")
+        cache.globalCache.newCache("assetRelationshipCache")]
+        return super(_assetRelationshipUpdate, self).__init__(restrictClass)
 
     def postRun(self):
         self.bulkClass.bulkOperatonProcessing()
@@ -72,9 +73,10 @@ class _assetRelationshipBulkUpdate(action._action):
     timespan = int()
     eventField = str()
 
-    def __init__(self):
+    def __init__(self,restrictClass=True):
         self.bulkClass = db._bulk()
         cache.globalCache.newCache("assetRelationshipCache")
+        return super(_assetRelationshipBulkUpdate, self).__init__(restrictClass)
 
     def postRun(self):
         self.bulkClass.bulkOperatonProcessing()
