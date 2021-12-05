@@ -1,7 +1,9 @@
 from core import plugin, model
 
+from plugins.asset.models import asset
+
 class _asset(plugin._plugin):
-    version = 1.0
+    version = 1.1
 
     def install(self):
         # Register models
@@ -14,6 +16,8 @@ class _asset(plugin._plugin):
         model.registerModel("assetRelationshipBulkUpdate","_assetRelationshipBulkUpdate","_action","plugins.asset.models.relationship")
         model.registerModel("assetMatch","_assetMatch","_action","plugins.asset.models.assetSearch")
         model.registerModel("assetProcess","_assetProcess","_action","plugins.asset.models.action")
+        asset._asset()._dbCollection.create_index([("name", 1)])
+        asset._asset()._dbCollection.create_index([("assetType", 1),("entity", 1)])
         return True
 
     def uninstall(self):
@@ -36,4 +40,8 @@ class _asset(plugin._plugin):
             model.registerModel("assetMatch","_assetMatch","_action","plugins.asset.models.assetSearch")
         if self.version < 0.8:
             model.registerModel("assetProcess","_assetProcess","_action","plugins.asset.models.action")
+        if self.version < 1.1:
+            print("Creating indexes...")
+            asset._asset()._dbCollection.create_index([("name", 1)])
+            asset._asset()._dbCollection.create_index([("assetType", 1),("entity", 1)])
         return True
