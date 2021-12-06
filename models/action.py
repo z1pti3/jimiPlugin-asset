@@ -94,6 +94,8 @@ class _assetUpdate(action._action):
 				lastSeen = source
 				if "lastUpdate" not in lastSeen:
 					lastSeen["lastUpdate"] = 0
+				if "sourcePriorityMaxAge" not in lastSeen:
+					lastSeen["sourcePriorityMaxAge"] = self.sourcePriorityMaxAge
 				break
 		if not lastSeen:
 			assetItem.lastSeen.append({ "source" : updateSource, "lastUpdate" : 0 })
