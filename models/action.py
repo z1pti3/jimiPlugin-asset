@@ -94,6 +94,8 @@ class _assetUpdate(action._action):
 				lastSeen = source
 				if "lastUpdate" not in lastSeen:
 					lastSeen["lastUpdate"] = 0
+				if "sourcePriorityMaxAge" not in lastSeen:
+					lastSeen["sourcePriorityMaxAge"] = self.sourcePriorityMaxAge
 				break
 		if not lastSeen:
 			assetItem.lastSeen.append({ "source" : updateSource, "lastUpdate" : 0 })
@@ -189,14 +191,17 @@ class _assetProcess(action._action):
 				for key, value in sourceValue.items():
 					if value:
 						if key not in blacklist:
-							if key not in foundValues:
-								if (sourceValue["lastUpdate"] + sourceValue["sourcePriorityMaxAge"]) > now:
-									foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
+							try:
+								if key not in foundValues:
+									if (sourceValue["lastUpdate"] + sourceValue["sourcePriorityMaxAge"]) > now:
+										foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
+									else:
+										foundValues[key] = { "value" : value, "priority" : 66535 }
 								else:
-									foundValues[key] = { "value" : value, "priority" : 66535 }
-							else:
-								if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + sourceValue["sourcePriorityMaxAge"]) > now:
-									foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
+									if sourceValue["priority"] < foundValues[key]["priority"] and (sourceValue["lastUpdate"] + sourceValue["sourcePriorityMaxAge"]) > now:
+										foundValues[key] = { "value" : value, "priority" : sourceValue["priority"] }
+							except KeyError as e:
+								print("{0}, {1}, {2}".format(assetItem,sourceValue,e))
 			changes = False
 			for key, value in foundValues.items():
 				if key in assetItem.fields:
