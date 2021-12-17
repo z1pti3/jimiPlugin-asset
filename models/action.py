@@ -209,6 +209,7 @@ class _assetProcess(action._action):
 						assetItem.fields[key] = value["value"]
 				else:
 					assetItem.fields[key] = value["value"]
+					changes = True
 			popList = []
 			for field in assetItem.fields.keys():
 				if field not in foundValues:
