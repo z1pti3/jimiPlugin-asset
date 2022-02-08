@@ -89,19 +89,37 @@ class _assetUpdate(action._action):
 
 		lastSeen = None
 		existingLastSeen = True
+		pullItems = []
+		matchedSources = []
 		for source in assetItem.lastSeen:
 			if source["source"] == updateSource:
-				lastSeen = source
-				if "lastUpdate" not in lastSeen:
-					lastSeen["lastUpdate"] = 0
-				if "sourcePriorityMaxAge" not in lastSeen:
-					lastSeen["sourcePriorityMaxAge"] = self.sourcePriorityMaxAge
-				break
+				matchedSources.append(source)
+		# Handles race condition where multiple sources with the same name exist
+		if len(matchedSources) > 1:
+			initSource = matchedSources[0]
+			for x in range(1,len(matchedSources)):
+				if initSource["lastUpdate"] < matchedSources[x]["lastUpdate"]:
+					pullItems.append({"lastUpdate":initSource["lastUpdate"]})
+					initSource = {**initSource,**matchedSources[x]}
+				else:
+					pullItems.append({"lastUpdate":matchedSources[x]["lastUpdate"]})
+					initSource = {**matchedSources[x],**initSource}
+			matchedSources = [initSource]
+
+		try:
+			lastSeen = matchedSources[0]
+			if "lastUpdate" not in lastSeen:
+				lastSeen["lastUpdate"] = 0
+			if "sourcePriorityMaxAge" not in lastSeen:
+				lastSeen["sourcePriorityMaxAge"] = self.sourcePriorityMaxAge
+		except:
+			pass
+
 		if not lastSeen:
 			assetItem.lastSeen.append({ "source" : updateSource, "lastUpdate" : 0 })
 			lastSeen = assetItem.lastSeen[-1]
 			existingLastSeen = False
-		
+
 		# Converting millsecond int epoch into epoch floats
 		currentTimestamp = lastSeen["lastUpdate"]
 		if len(str(currentTimestamp).split(".")[0]) == 13:
@@ -151,6 +169,8 @@ class _assetUpdate(action._action):
 		if assetChanged:
 			if existingLastSeen:
 				self.bulkClass.newBulkOperaton(assetItem._dbCollection.name,"update",{ "query" : { "_id" : jimi.db.ObjectId(assetItem._id), "lastSeen.source" : updateSource }, "update" : { "$set" : { "lastSeen.$" : lastSeen } } })
+				if len(pullItems) > 0:
+					self.bulkClass.newBulkOperaton(assetItem._dbCollection.name,"update",{ "query" : { "_id" : jimi.db.ObjectId(assetItem._id), "lastSeen.source" : updateSource }, "update" : { "$pull" : {"lastSeen": {"$or" : pullItems}} } })
 			else:
 				self.bulkClass.newBulkOperaton(assetItem._dbCollection.name,"update",{ "query" : { "_id" : jimi.db.ObjectId(assetItem._id) }, "update" : { "$push" : { "lastSeen" : lastSeen } } })
 			actionResult["result"] = True
